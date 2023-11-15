@@ -1,0 +1,126 @@
+[{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 5,
+    "submodel" : 2
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 5,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 5,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 5,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 5,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 4,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 4,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 4,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 4,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 4,
+    "submodel" : 20000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 4,
+    "submodel" : 20000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 3,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 3,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 3,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 3,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 3,
+    "submodel" : 20000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 3,
+    "submodel" : 20000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 2,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 2,
+    "submodel" : 200
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "True",
+    "extract" : 2,
+    "submodel" : 2000
+},
+{ 
+    "dataset" : "CC Fraud",
+    "altnorm" : "False",
+    "extract" : 2,
+    "submodel" : 2000
+}]
