@@ -26,7 +26,7 @@ import itertools
 # from pydbm.dbm.restrictedboltzmannmachines.rt_rbm import RTRBM
 
 def generate_subsets(sequence, leng=3):
-    print('generate_subsets')
+    # print('generate_subsets')
     subsets = []
     n = len(sequence)
 
@@ -37,7 +37,7 @@ def generate_subsets(sequence, leng=3):
 
 
 def all_features(*args, leng=3):
-    print('all_features')
+    # print('all_features')
     F=int(args[0].shape[1])
     for seq in generate_subsets(list(range(F)),leng):
         yield [xx[:,seq] for xx in args]
@@ -96,7 +96,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # PRE-PROCESSING
     ######################################################################################
     def pre_process(xx,txx):
-        print("pre_process. x shape:",xx.shape)
+        # print("pre_process. x shape:",xx.shape)
 
         # tabular dataset
         if len(xx.shape) == 2:
@@ -106,14 +106,14 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
         # image dataset
         if len(xx.shape) == 3:
-            print('flatten images')
+            # print('flatten images')
             # Flatten the images
             # x = xx.reshape(xx.shape[0], -1)
             # tx = txx.reshape(txx.shape[0], -1)
 
             x = np.reshape(xx,(xx.shape[0],np.prod(xx.shape[1:])))
             tx = np.reshape(txx ,(txx.shape[0],np.prod(txx.shape[1:])))
-            print('done flattening images. x.shape, tx.shape : ', x.shape, tx.shape)
+            # print('done flattening images. x.shape, tx.shape : ', x.shape, tx.shape)
 
 
         # [0,1] Normalization
@@ -127,10 +127,10 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
         return x,tx
 
     ######################################################################################
-    # FEATURE EXTRACTION
+    # FEATURE REDUCTION
     ######################################################################################
-    def dim_reduction(xx, txx):
-        print("dim_reduction")
+    def feature_reduction(xx, txx):
+        # print("feature_reduction")
         n_components = int(math.ceil(num_feats_rel*xx.shape[1]))
 
         match extract:
@@ -185,13 +185,13 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
                 # n_components = number of output dimensions (usually 2 for 2D visualization)
                 # perplexity = a hyperparameter that controls the balance between preserving global and local structure
-                print('\n tSNE dim_reduction 1')
+                # print('\n tSNE feature_reduction 1')
                 tsne = TSNE(n_components=2, perplexity=30, random_state=0)
-                print('\n tSNE dim_reduction 2')
+                # print('\n tSNE feature_reduction 2')
                 x = tsne.fit_transform(xx)
-                print('\n tSNE dim_reduction 3')
+                # print('\n tSNE feature_reduction 3')
                 tx = tsne.transform(txx)
-                print('\n tSNE dim_reduction 4')
+                # print('\n tSNE feature_reduction 4')
 
             case "pca":   # PCA
                 pca = PCA(n_components=10)
@@ -207,7 +207,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                 # NMF is a non-convex optimization problem, so the results may vary with different initializations
                 nmf = NMF(n_components=10, init='random', random_state=0)
                 x = nmf.fit_transform(xx)
-                tx = nmf.transform(txx)
+                tx = nmf.fit_transform(txx) # there is no separate transform method
                 # xx_features = nmf.components_
 
             case "ae":   # Autoencoder
@@ -230,17 +230,17 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
         return x, tx
 
     ######################################################################################
-    # FEATURE ENGINEERING
+    # FEATURE BAGGING
     # First, standardize (mean=0, variance=1) the data ; second, generate interaction terms.
     # This is to prevent multicollinearity among the new (engineered) features
     # https://www.tandfonline.com/doi/abs/10.1080/01621459.1980.10477430
     ######################################################################################
     def feature_bagging(x,tx,order=order):
-        print('feature_bagging')
+        # print('feature_bagging')
 
-        # scaler = StandardScaler()
-        # x = scaler.fit_transform(x)
-        # tx = scaler.transform(tx)
+        scaler = StandardScaler()
+        x = scaler.fit_transform(x)
+        tx = scaler.transform(tx)
 
         # print("Less than zero:", x[x<0])
 
@@ -282,10 +282,10 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # ENSEMBLE
     ######################################################################################
     def one_model(xx,txx):
-        print('one_model')
+        # print('one_model')
 
         x, tx = pre_process(xx,txx)
-        x, tx = dim_reduction(x,tx)
+        x, tx = feature_reduction(x,tx)
         x, tx = feature_bagging(x,tx)
 
         # eqn. 2 from the DEAN paper

@@ -1,12 +1,54 @@
 [{ 
-    "altnorm" : "True",
-    "extract" : "pca",
-    "no_submodels" : 5,
+    "altnorm" : "False",
+    "extract" : "ica",
+    "no_submodels" : 50,
     "submodel":"lin"
 },
 { 
-    "altnorm" : "True",
-    "extract" : "tsne",
-    "no_submodels" : 5,
+    "altnorm" : "False",
+    "extract" : "ica",
+    "no_submodels" : 500,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "ica",
+    "no_submodels" : 5000,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "nmf",
+    "no_submodels" : 50,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "nmf",
+    "no_submodels" : 500,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "nmf",
+    "no_submodels" : 5000,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "nmf",
+    "no_submodels" : 50,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "pca",
+    "no_submodels" : 500,
+    "submodel":"lin"
+},
+{ 
+    "altnorm" : "False",
+    "extract" : "pca",
+    "no_submodels" : 5000,
     "submodel":"lin"
 }]
