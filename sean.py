@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from sklearn.linear_model import LinearRegression, LassoCV, RidgeClassifierCV
+from sklearn.linear_model import LinearRegression, LassoCV, RidgeClassifierCV, ElasticNetCV, LogisticRegressionCV
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import FastICA, PCA, NMF
@@ -96,28 +96,41 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # PRE-PROCESSING
     ######################################################################################
     def pre_process(xx,txx):
-        # [0,1] Normalization
-        scaler = MinMaxScaler()
-        x = scaler.fit_transform(xx)
-        tx = scaler.transform(txx)
-        if altnorm: # [0.5,1] Normalization
-          x=(1+x)/2
-          tx=(1+tx)/2
+        print("pre_process. x shape:",xx.shape)
 
         # tabular dataset
-        if len(x.shape) == 2:
-            pass
+        if len(xx.shape) == 2:
+            # pass
+            x = xx
+            tx = txx
 
         # image dataset
-        if len(x.shape) == 3:
-            pass
+        if len(xx.shape) == 3:
+            print('flatten images')
+            # Flatten the images
+            # x = xx.reshape(xx.shape[0], -1)
+            # tx = txx.reshape(txx.shape[0], -1)
+
+            x = np.reshape(xx,(xx.shape[0],np.prod(xx.shape[1:])))
+            tx = np.reshape(txx ,(txx.shape[0],np.prod(txx.shape[1:])))
+            print('done flattening images. x.shape, tx.shape : ', x.shape, tx.shape)
+
+
+        # [0,1] Normalization
+        scaler = MinMaxScaler()
+        x = scaler.fit_transform(x)
+        tx = scaler.transform(tx)
+        if altnorm: # [0.5,1] Normalization
+            x=(1+x)/2
+            tx=(1+tx)/2
 
         return x,tx
 
     ######################################################################################
     # FEATURE EXTRACTION
     ######################################################################################
-    def extract_features(xx, txx):
+    def dim_reduction(xx, txx):
+        print("dim_reduction")
         n_components = int(math.ceil(num_feats_rel*xx.shape[1]))
 
         match extract:
@@ -172,13 +185,13 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
                 # n_components = number of output dimensions (usually 2 for 2D visualization)
                 # perplexity = a hyperparameter that controls the balance between preserving global and local structure
-                print('\n tSNE extract_features 1')
+                print('\n tSNE dim_reduction 1')
                 tsne = TSNE(n_components=2, perplexity=30, random_state=0)
-                print('\n tSNE extract_features 2')
+                print('\n tSNE dim_reduction 2')
                 x = tsne.fit_transform(xx)
-                print('\n tSNE extract_features 3')
+                print('\n tSNE dim_reduction 3')
                 tx = tsne.transform(txx)
-                print('\n tSNE extract_features 4')
+                print('\n tSNE dim_reduction 4')
 
             case "pca":   # PCA
                 pca = PCA(n_components=10)
@@ -222,12 +235,14 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # This is to prevent multicollinearity among the new (engineered) features
     # https://www.tandfonline.com/doi/abs/10.1080/01621459.1980.10477430
     ######################################################################################
-    def engineer_features(x,tx,order=order):
-        # print('select_features')
+    def feature_bagging(x,tx,order=order):
+        print('feature_bagging')
 
-        scaler = StandardScaler()
-        x = scaler.fit_transform(x)
-        tx = scaler.transform(tx)
+        # scaler = StandardScaler()
+        # x = scaler.fit_transform(x)
+        # tx = scaler.transform(tx)
+
+        # print("Less than zero:", x[x<0])
 
         #all ordered subsequences up to count of length up to order
         orderings = list(itertools.chain.from_iterable(itertools.combinations(range(x.shape[1]),i) for i in range(1,order+1)))
@@ -267,11 +282,11 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # ENSEMBLE
     ######################################################################################
     def one_model(xx,txx):
-        # print('one_model')
+        print('one_model')
 
         x, tx = pre_process(xx,txx)
-        x, tx = extract_features(x,tx)
-        x, tx = engineer_features(x,tx)
+        x, tx = dim_reduction(x,tx)
+        x, tx = feature_bagging(x,tx)
 
         # eqn. 2 from the DEAN paper
         goal=np.ones(len(x))
@@ -288,7 +303,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
             case "log":
                 cv = LogisticRegressionCV(fit_intercept=False).fit(x,goal)
             case _:
-                raise Exception("Please specify a submodel type")            
+                raise Exception("Please specify a submodel type")
 
         # eqn. 4 from the DEAN paper
         meanv=np.mean(cv.predict(x))
@@ -313,6 +328,6 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     return np.mean(scores,axis=0)
 
 
-# executes only when ran directly, not when this file is imported into another python file
-if __name__ == '__main__':
-    sean()
+# # executes only when ran directly, not when this file is imported into another python file
+# if __name__ == '__main__':
+#     sean()

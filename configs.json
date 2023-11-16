@@ -1,14 +1,12 @@
 [{ 
-    "dataset" : "CC Fraud",
     "altnorm" : "True",
     "extract" : "pca",
-    "no_submodels" : 20000,
+    "no_submodels" : 5,
     "submodel":"lin"
 },
 { 
-    "dataset" : "CC Fraud",
     "altnorm" : "True",
     "extract" : "tsne",
-    "no_submodels" : 20000,
+    "no_submodels" : 5,
     "submodel":"lin"
 }]
