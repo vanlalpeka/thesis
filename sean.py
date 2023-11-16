@@ -164,7 +164,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
             case "tsne":   # tSNE
 
-                # Dimensionality reduction to improve performance
+                # Dimensionality reduction to reduce training duration
                 if xx.shape[1] > 10:
                     pca = PCA(n_components=10)
                     xx = pca.fit_transform(xx)

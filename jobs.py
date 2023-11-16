@@ -54,20 +54,15 @@ logger.info('START')
 with open("configs.json","r") as f:
     configs=json.loads(f.read())
 
-runtime, extract, auc, no_submodels, submodel, altnorm = [], [], [], [], [], []
+# runtime, extract, auc, no_submodels, submodel, altnorm = [], [], [], [], [], []
 for config in configs:
     logger.info(f'Calling sean(altnorm={config["altnorm"]}, no_submodels={config["no_submodels"]}, submodel={config["submodel"]}, prep=[], extract={config["extract"]})')
     start_time = time.time()
     pred = sean(X_train, X_test, altnorm=config["altnorm"], no_submodels = config["no_submodels"], prep=[], extract=config["extract"])
     end_time = time.time()
-    rt = end_time - start_time
-    runtime.append(rt)
-    extract.append(config["extract"])
-    submodels.append(config["submodel"])
-    altnorm.append(config["altnorm"])
-    t_auc = roc_auc_score(y_test, pred)
-    auc.append(t_auc)
-    logger.info(f'Feature extraction type: {config["extract"]} Submodel: {config["submodel"]} Count: {config["no_submodels"]} Altnorm: {config["altnorm"]} AUC: {t_auc} Runtime: {rt}')
+    runtime = end_time - start_time
+    auc = roc_auc_score(y_test, pred)
+    logger.info(f'Result:: AUC: {auc} Runtime: {runtime}')
 # print('\nROC_AUC: {} '.format(roc_auc_score(y_test, pred)))
 
 # with open('output_data.csv', 'a', newline='') as csvfile:
