@@ -93,7 +93,7 @@ for config in configs:
     runtime = end_time - start_time
     # auc = roc_auc_score(y_test, pred)
     auc = roc_auc_score(tyy, pred)
-    logger.info(f'Result:: AUC: {auc} Runtime: {runtime} \n')
+    logger.info(f'Result:: AUC: {auc} Runtime: {time.strftime("%H:%M:%S", time.gmtime(runtime))} \n')
 # print('\nROC_AUC: {} '.format(roc_auc_score(y_test, pred)))
 
 # with open('output_data.csv', 'a', newline='') as csvfile:
