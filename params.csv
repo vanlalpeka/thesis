@@ -1,9 +1,3 @@
 prep,extract,submodel,no_submodels
-std,pca,lin,50
-altnorm,pca,lin,50
-std,ae,lin,50
 altnorm,ae,lin,50
-std,ica,lin,50
-altnorm,ica,lin,50
-std,nmf,lin,50
-altnorm,nmf,lin,50
+std,ae,lin,50

@@ -86,29 +86,33 @@ logger.info('START')
 # with open("configs.json","r") as f:
 #     configs=json.loads(f.read())
 
-with open("params.csv") as f:
-    # heading = next(f) 
-    params = csv.DictReader(f, delimiter=',')
-    # params=csv.reader(f)
+try:
+    with open("params.csv") as f:
+        # heading = next(f) 
+        params = csv.DictReader(f, delimiter=',')
+        # params=csv.reader(f)
 
-    for param in params:
-        for i in range(10):
+        for param in params:
+            for i in range(100):
 
-            # image 
-            start_time = time.time()
-            pred = sean(i_xx, i_txx, no_submodels = int(param["no_submodels"]), prep=[], extract=param["extract"])
-            end_time = time.time()
-            runtime = end_time - start_time
-            auc = roc_auc_score(i_tyy, pred)
-            logger.info(f'Image {param["no_submodels"]} \t {param["submodel"]} \t {param["prep"]} \t {param["extract"]} \t {runtime} \t {auc})')
+                # # tabular
+                # start_time = time.time()
+                # pred = sean(t_xx, t_txx, no_submodels = int(param["no_submodels"]), prep=[], extract=param["extract"])
+                # end_time = time.time()
+                # runtime = end_time - start_time
+                # auc = roc_auc_score(t_tyy, pred)
+                # logger.info(f'Tabular {param["no_submodels"]} \t {param["submodel"]} \t {param["prep"]} \t {param["extract"]} \t {runtime} \t {auc}')
 
-            # tabular
-            start_time = time.time()
-            pred = sean(t_xx, t_txx, no_submodels = int(param["no_submodels"]), prep=[], extract=param["extract"])
-            end_time = time.time()
-            runtime = end_time - start_time
-            auc = roc_auc_score(t_tyy, pred)
-            logger.info(f'Tabular {param["no_submodels"]} \t {param["submodel"]} \t {param["prep"]} \t {param["extract"]} \t {runtime} \t {auc})')
+                # image 
+                start_time = time.time()
+                pred = sean(i_xx, i_txx, no_submodels = int(param["no_submodels"]), prep=[], extract=param["extract"])
+                end_time = time.time()
+                runtime = end_time - start_time
+                auc = roc_auc_score(i_tyy, pred)
+                logger.info(f'Image {param["no_submodels"]} \t {param["submodel"]} \t {param["prep"]} \t {param["extract"]} \t {runtime} \t {auc}')
+
+except Exception:
+    logger.exception("message")
 
 
 
