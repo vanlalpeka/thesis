@@ -3,6 +3,9 @@
 import numpy as np
 import pandas as pd
 
+import imgaug as ia
+import imgaug.augmenters as iaa
+
 from sklearn.linear_model import LinearRegression, LassoCV, RidgeClassifierCV, ElasticNetCV, LogisticRegressionCV
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 from sklearn.model_selection import train_test_split
@@ -22,28 +25,6 @@ from tqdm import tqdm
 import math
 import itertools
 
-# # for RBM
-# from pydbm.activation.logistic_function import LogisticFunction
-# from pydbm.activation.tanh_function import TanhFunction
-# from pydbm.optimization.optparams.sgd import SGD
-# from pydbm.dbm.restrictedboltzmannmachines.rt_rbm import RTRBM
-
-def generate_subsets(sequence, leng=3):
-    # print('generate_subsets')
-    subsets = []
-    n = len(sequence)
-
-    for r in range(n+1):
-        for zw in itertools.combinations(sequence, r):
-            if len(zw) == leng or leng is None:
-                yield zw
-
-
-def all_features(*args, leng=3):
-    # print('all_features')
-    F=int(args[0].shape[1])
-    for seq in generate_subsets(list(range(F)),leng):
-        yield [xx[:,seq] for xx in args]
 
 class Autoencoder(Model):
     def __init__(self, latent_dim, shape):
@@ -83,38 +64,120 @@ class ConvAutoencoder(Model):
         decoded = self.decoder(encoded)
         return decoded
 
+# https://github.com/echen/restricted-boltzmann-machines/blob/master/rbm.py
+class RBM:
+
+  def __init__(self, num_visible, num_hidden):
+    self.num_hidden = num_hidden
+    self.num_visible = num_visible
+    self.debug_print = True
+
+    # Initialize a weight matrix, of dimensions (num_visible x num_hidden), using
+    # a uniform distribution between -sqrt(6. / (num_hidden + num_visible))
+    # and sqrt(6. / (num_hidden + num_visible)). One could vary the
+    # standard deviation by multiplying the interval with appropriate value.
+    # Here we initialize the weights with mean 0 and standard deviation 0.1.
+    # Reference: Understanding the difficulty of training deep feedforward
+    # neural networks by Xavier Glorot and Yoshua Bengio
+    np_rng = np.random.RandomState(1234)
+
+    self.weights = np.asarray(np_rng.uniform(
+			low=-0.1 * np.sqrt(6. / (num_hidden + num_visible)),
+                       	high=0.1 * np.sqrt(6. / (num_hidden + num_visible)),
+                       	size=(num_visible, num_hidden)))
+
+
+    # Insert weights for the bias units into the first row and first column.
+    self.weights = np.insert(self.weights, 0, 0, axis = 0)
+    self.weights = np.insert(self.weights, 0, 0, axis = 1)
+
+  def train(self, data, max_epochs = 1000, learning_rate = 0.1):
+    """
+    Train the machine.
+
+    Parameters
+    ----------
+    data: A matrix where each row is a training example consisting of the states of visible units.
+    """
+
+    num_examples = data.shape[0]
+
+    # Insert bias units of 1 into the first column.
+    data = np.insert(data, 0, 1, axis = 1)
+
+    for epoch in range(max_epochs):
+      # Clamp to the data and sample from the hidden units.
+      # (This is the "positive CD phase", aka the reality phase.)
+      pos_hidden_activations = np.dot(data, self.weights)
+      pos_hidden_probs = self._logistic(pos_hidden_activations)
+      pos_hidden_probs[:,0] = 1 # Fix the bias unit.
+      pos_hidden_states = pos_hidden_probs > np.random.rand(num_examples, self.num_hidden + 1)
+      # Note that we're using the activation *probabilities* of the hidden states, not the hidden states
+      # themselves, when computing associations. We could also use the states; see section 3 of Hinton's
+      # "A Practical Guide to Training Restricted Boltzmann Machines" for more.
+      pos_associations = np.dot(data.T, pos_hidden_probs)
+
+      # Reconstruct the visible units and sample again from the hidden units.
+      # (This is the "negative CD phase", aka the daydreaming phase.)
+      neg_visible_activations = np.dot(pos_hidden_states, self.weights.T)
+      neg_visible_probs = self._logistic(neg_visible_activations)
+      neg_visible_probs[:,0] = 1 # Fix the bias unit.
+      neg_hidden_activations = np.dot(neg_visible_probs, self.weights)
+      neg_hidden_probs = self._logistic(neg_hidden_activations)
+      # Note, again, that we're using the activation *probabilities* when computing associations, not the states
+      # themselves.
+      neg_associations = np.dot(neg_visible_probs.T, neg_hidden_probs)
+
+      # Update weights.
+      self.weights += learning_rate * ((pos_associations - neg_associations) / num_examples)
+
+      error = np.sum((data - neg_visible_probs) ** 2)
+      if self.debug_print:
+        print("Epoch %s: error is %s" % (epoch, error))
+
+  def run_visible(self, data):
+    """
+    Assuming the RBM has been trained (so that weights for the network have been learned),
+    run the network on a set of visible units, to get a sample of the hidden units.
+
+    Parameters
+    ----------
+    data: A matrix where each row consists of the states of the visible units.
+
+    Returns
+    -------
+    hidden_states: A matrix where each row consists of the hidden units activated from the visible
+    units in the data matrix passed in.
+    """
+
+    num_examples = data.shape[0]
+
+    # Create a matrix, where each row is to be the hidden units (plus a bias unit)
+    # sampled from a training example.
+    hidden_states = np.ones((num_examples, self.num_hidden + 1))
+
+    # Insert bias units of 1 into the first column of data.
+    data = np.insert(data, 0, 1, axis = 1)
+
+    # Calculate the activations of the hidden units.
+    hidden_activations = np.dot(data, self.weights)
+    # Calculate the probabilities of turning the hidden units on.
+    hidden_probs = self._logistic(hidden_activations)
+    # Turn the hidden units on with their specified probabilities.
+    hidden_states[:,:] = hidden_probs > np.random.rand(num_examples, self.num_hidden + 1)
+    # Always fix the bias unit to 1.
+    # hidden_states[:,0] = 1
+
+    # Ignore the bias units.
+    hidden_states = hidden_states[:,1:]
+    return hidden_states
+
+  def _logistic(self, x):
+    return 1.0 / (1 + np.exp(-x))
 
 
 
-
-
-# Calculates ZCA components from xx. Applies that to both xx and txx
-def ZCA(xx, txx):
-    # Calculate the mean of each of the columns
-    mean_xx = np.mean(xx, axis=0)
-    mean_txx = np.mean(txx, axis=0)
-
-    # Center the data by subtracting the mean
-    centered_xx = xx - mean_xx
-    centered_txx = txx - mean_txx
-
-    # Calculate the covariance matrix
-    covariance_matrix = np.cov(centered_xx, rowvar=False)
-
-    # Perform eigenvalue decomposition on the covariance matrix
-    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
-
-    # Calculate the ZCA components
-    zca_components = np.dot(eigenvectors, np.dot(np.diag(1.0 / np.sqrt(eigenvalues + 1e-5)), eigenvectors.T))
-
-    # Apply ZCA whitening to the data
-    zca_whitened_xx = np.dot(centered_xx, zca_components)
-    zca_whitened_txx = np.dot(centered_txx, zca_components)
-
-    return zca_whitened_xx, zca_whitened_txx
-
-
-def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=10, order=2, relative_feats=True, min_feats=3, prep=[], extract='ica', submodel='lin', feat_type='manual'):
+def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=10, order=2, relative_feats=True, min_feats=3, prep=[], extract='ica', submodel='lin', feat_type='manual', epochs=10):
 
     # print('In SEAN')
     # print('Params: number of submodels {} \n Linear? {} \n Feature Selector? {} \n Relative features? {} \n Altnorm? {} \n Min Features? {} \n'.format(no_submodels, justlin,projections,relative_feats,altnorm,min_feats))
@@ -124,6 +187,61 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     def pre_process(x,tx):
         # image dataset
         if len(x.shape) > 2:
+
+            if 'canny' in prep:
+                # A value close to 1.0 means that only the edge image is visible.
+                # A value close to 0.0 means that only the original image is visible.
+                # If a tuple (a, b), a random value from the range a <= x <= b will be sampled per image.
+                aug = iaa.Canny(alpha=(0.75, 1.0))
+                x = aug(x)
+
+            if 'clahe' in prep:
+                # CLAHE on all channels of the images
+                aug = iaa.AllChannelsCLAHE()
+                x = aug(images=x)
+
+            if 'blur' in prep:
+                # Blur each image with a gaussian kernel with a sigma of 3.0
+                aug = iaa.GaussianBlur(sigma=(0.0, 3.0))
+                x = aug(images=x)
+
+            if 'augment' in prep:
+                ia.seed(1)
+
+                seq = iaa.Sequential([
+                    iaa.Fliplr(0.5), # horizontal flips
+                    iaa.Crop(percent=(0, 0.1)), # random crops
+                    # # Small gaussian blur with random sigma between 0 and 0.5.
+                    # # But we only blur about 50% of all images.
+                    # iaa.Sometimes(
+                    #     0.5,
+                    #     iaa.GaussianBlur(sigma=(0, 0.5))
+                    # ),
+                    # # Strengthen or weaken the contrast in each image.
+                    # iaa.LinearContrast((0.75, 1.5)),
+                    # # Add gaussian noise.
+                    # # For 50% of all images, we sample the noise once per pixel.
+                    # # For the other 50% of all images, we sample the noise per pixel AND
+                    # # channel. This can change the color (not only brightness) of the
+                    # # pixels.
+                    # iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5),
+                    # # Make some images brighter and some darker.
+                    # # In 20% of all cases, we sample the multiplier once per channel,
+                    # # which can end up changing the color of the images.
+                    # iaa.Multiply((0.8, 1.2), per_channel=0.2),
+                    # Apply affine transformations to each image.
+                    # Scale/zoom them, translate/move them, rotate them and shear them.
+                    iaa.Affine(
+                        scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
+                        translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
+                        rotate=(-25, 25),
+                        shear=(-8, 8)
+                    )
+                ], random_order=True) # apply augmenters in random order
+
+                augmented_images = seq(images=x)
+                x = np.concatenate((x,augmented_images))
+
             if 'gray' in prep:
                 x = np.dot(x[..., :3], [0.2126 , 0.7152 , 0.0722 ])
                 tx = np.dot(tx[..., :3], [0.2126 , 0.7152 , 0.0722 ])
@@ -176,19 +294,36 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
         match extract:
             case "rbm":   # ZCA +RBM
-                # ZCA(): Calculates ZCA components from xx. Applies that to both xx and txx
-                x, txx = ZCA(xx, txx)
-                print('rbm 1')
 
-                rbm = RBM(num_visible=xx.shape[1], num_hidden=n_components)
-                print('rbm 2')
-                x = rbm.train(x, learning_rate=0.1, epochs=50, batch_size=100)
-                print('rbm 3')
-                tx = rbm.train(tx, learning_rate=0.1, epochs=50, batch_size=100)
-                print('rbm 4')
+                # Calculate the mean of each of the columns
+                mean_x = np.mean(x, axis=0)
+                mean_tx = np.mean(tx, axis=0)
+
+                # Center the data by subtracting the mean
+                centered_x = x - mean_x
+                centered_tx = tx - mean_tx
+
+                # Calculate the covariance matrix
+                covariance_matrix = np.cov(centered_x, rowvar=False)
+
+                # Perform eigenvalue decomposition on the covariance matrix
+                eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+
+                # Calculate the ZCA components
+                zca_components = np.dot(eigenvectors, np.dot(np.diag(1.0 / np.sqrt(eigenvalues + 1e-5)), eigenvectors.T))
+
+                # Apply ZCA whitening to the data
+                zca_whitened_x = np.dot(centered_x, zca_components)
+                zca_whitened_tx = np.dot(centered_tx, zca_components)
+
+                # RBM
+                r = RBM(num_visible = zca_whitened_x.shape[1], num_hidden = n_components)
+                r.train(zca_whitened_x, max_epochs = epochs)
+                x = r.run_visible(zca_whitened_x)
+                tx = r.run_visible(zca_whitened_tx)
 
             case "tsne":   # tSNE
-                # Dimensionality SELECTION to reduce training duration
+                # FEATURE SELECTION to reduce training duration
                 if xx.shape[1] > n_components:
                     pca = PCA(n_components=n_components)
                     xx = pca.fit_transform(xx)
@@ -201,7 +336,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                 # print('\n tSNE feature_selection 2')
                 x = tsne.fit_transform(xx)
                 # print('\n tSNE feature_selection 3')
-                tx = tsne.fit_transform(txx) # there is no 'transform' method
+                tx = tsne.fit_transform(txx) # scikit tsne has no 'transform' method
                 # print('\n tSNE feature_selection 4')
 
             case "pca":   # PCA
@@ -218,23 +353,20 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                 # NMF is a non-convex optimization problem, so the results may vary with different initializations
                 nmf = NMF(n_components = n_components, init='random', random_state=0)
                 x = nmf.fit_transform(xx)
-                tx = nmf.fit_transform(txx) # there is no separate transform method
+                tx = nmf.fit_transform(txx) # scikit has no separate transform() function for NMF
                 # xx_features = nmf.components_
 
             case "ae":   # Autoencoder
-                print('feature_selection AE xx.shape : ', xx.shape)
-                shape = xx.shape[1:]
-                latent_dim = int(math.ceil(num_feats_rel*shape[0]))
 
                 # Basic Autoencoder
-                autoencoder = Autoencoder(latent_dim, shape)
+                autoencoder = Autoencoder(n_components, xx.shape[1:])
 
                 # # Convolution Autoencoder
                 # autoencoder = ConvAutoencoder()
 
                 autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
                 autoencoder.fit(xx, xx,
-                                epochs=10,
+                                epochs=epochs,
                                 shuffle=True,
                                 validation_data=(txx, txx))
 
@@ -265,10 +397,9 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                 pass
 
             case 'manual':
-                #all ordered subsequences up to count of length up to order
+                # generate different set of combination of features
+                # the count of features in a feature set is bounded by the order value
                 orderings = list(itertools.chain.from_iterable(itertools.combinations(range(x.shape[1]),i) for i in range(1,order+1)))
-
-                # print(list(orderings))
 
                 if relative_feats:
                     num_feats = int(math.ceil(num_feats_rel*len(orderings)))
@@ -280,7 +411,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
                 # print(num_feats)
 
-                # update order
+                # multiply the values of the features in the feature set
                 xx,txx=[],[]
                 for order in orderings:
                     # print('update_order for-loop: order =={}'.format(order))
@@ -293,14 +424,13 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
                 if num_feats > x.shape[1]:
                     num_feats = x.shape[1]
+
+                # select random features from the interaction terms
                 feats = np.random.choice(range(x.shape[1]), num_feats, replace=False)
                 return x[:,feats],tx[:,feats]
 
             case _:
                 raise Exception('Invalid feat_type')
-
-    # no_of_covariates=int(np.ceil(x.shape[1]/10))#3
-
 
     ######################################################################################
     # ENSEMBLE
@@ -333,9 +463,9 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
         # eqn. 4 from the DEAN paper
         meanv=np.mean(cv.predict(x))
-        print("meanv=np.mean(cv.predict(x)) : ", meanv)
+        # print("meanv=np.mean(cv.predict(x)) : ", meanv)
         pred=np.square(cv.predict(tx)-meanv)
-        print("pred=np.square(cv.predict(tx)-meanv) : ", pred)
+        # print("\n pred=np.square(cv.predict(tx)-meanv) : ", pred)
 
         return pred
 
@@ -356,6 +486,6 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     return np.mean(scores,axis=0)
 
 
-# # executes only when ran directly, not when this file is imported into another python file
+# # executes only when run directly, not when this file is imported into another python file
 # if __name__ == '__main__':
 #     sean()

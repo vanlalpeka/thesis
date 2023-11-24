@@ -89,7 +89,7 @@ logger.info('START')
 try:
     with open("params.csv") as f:
         # heading = next(f) 
-        params = csv.DictReader(f, delimiter=',')
+        params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)
 
         for param in params:

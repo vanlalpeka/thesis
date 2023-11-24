@@ -1,3 +1,7 @@
-prep,extract,submodel,no_submodels
-altnorm,ae,lin,50
-std,ae,lin,50
+prep;extract;submodel;no_submodels
+["altnorm","canny"];ae;lin;50
+["altnorm","clahe"];ae;lin;50
+["altnorm","blur"];ae;lin;50
+["altnorm","augment"];ae;lin;50
+["altnorm","gray"];ae;lin;50
+["altnorm","blur","clahe","blur","augment","gray"];ae;lin;50
