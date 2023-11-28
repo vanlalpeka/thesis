@@ -105,7 +105,7 @@ try:
 
                 # image 
                 start_time = time.time()
-                pred = sean(i_xx, i_txx, no_submodels = int(param["no_submodels"]), prep=[], extract=param["extract"])
+                pred = sean(i_xx, i_txx, no_submodels = int(param["no_submodels"]), prep=param["prep"], extract=param["extract"])
                 end_time = time.time()
                 runtime = end_time - start_time
                 auc = roc_auc_score(i_tyy, pred)

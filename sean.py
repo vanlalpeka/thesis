@@ -193,7 +193,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                 # A value close to 0.0 means that only the original image is visible.
                 # If a tuple (a, b), a random value from the range a <= x <= b will be sampled per image.
                 aug = iaa.Canny(alpha=(0.75, 1.0))
-                x = aug(x)
+                x = aug(images=x)
 
             if 'clahe' in prep:
                 # CLAHE on all channels of the images
@@ -281,7 +281,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
             x = scaler.fit_transform(x)
             tx = scaler.transform(tx)
 
-        print("pre_process. x shape:",x.shape)
+        # print("pre_process: x.shape:",x.shape)
 
         return x,tx
 
@@ -289,19 +289,19 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # FEATURE SELECTION
     ######################################################################################
     def feature_selection(xx, txx):
-        print("feature_selection xx.shape : ", xx.shape)
+        # print("feature_selection xx.shape : ", xx.shape)
         n_components = int(math.ceil(num_feats_rel*xx.shape[1]))
 
         match extract:
-            case "rbm":   # ZCA +RBM
+            case "rbm":   # ZCA + RBM
 
                 # Calculate the mean of each of the columns
-                mean_x = np.mean(x, axis=0)
-                mean_tx = np.mean(tx, axis=0)
+                mean_x = np.mean(xx, axis=0)
+                mean_tx = np.mean(txx, axis=0)
 
                 # Center the data by subtracting the mean
-                centered_x = x - mean_x
-                centered_tx = tx - mean_tx
+                centered_x = xx - mean_x
+                centered_tx = txx - mean_tx
 
                 # Calculate the covariance matrix
                 covariance_matrix = np.cov(centered_x, rowvar=False)
@@ -390,7 +390,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # https://www.tandfonline.com/doi/abs/10.1080/01621459.1980.10477430
     ######################################################################################
     def feature_engineering(x,tx,order=order):
-        print('feature_engineering')
+        # print('feature_engineering')
 
         match feat_type:
             case 'mrmr':
@@ -449,13 +449,13 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
             case "lin":
                 cv = LinearRegression(fit_intercept=cept).fit(x,goal)
             case "lasso":
-                cv = LassoCV(fit_intercept=False).fit(x,goal)
+                cv = LassoCV(fit_intercept=cept).fit(x,goal)
             case "ridge":
-                cv = RidgeClassifierCV(fit_intercept=False).fit(x,goal)
+                cv = RidgeClassifierCV(fit_intercept=cept).fit(x,goal)
             case "elastic":
-                cv = ElasticNetCV(fit_intercept=False).fit(x,goal)
+                cv = ElasticNetCV(fit_intercept=cept).fit(x,goal)
             case "log":
-                cv = LogisticRegressionCV(fit_intercept=False).fit(x,goal)
+                cv = LogisticRegressionCV(fit_intercept=cept).fit(x,goal)
             # case "dtree":
             #     cv = DecisionTreeClassifier().fit(x,goal)
             case _:
