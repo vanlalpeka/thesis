@@ -185,6 +185,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # PRE-PROCESSING
     ######################################################################################
     def pre_process(x,tx):
+        print('pre_process')
         # image dataset
         if len(x.shape) > 2:
 
@@ -248,8 +249,8 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
             # print('flatten images')
             # Flatten the images
-            # x = xx.reshape(xx.shape[0], -1)
-            # tx = txx.reshape(txx.shape[0], -1)
+            # x = x.reshape(x.shape[0], -1)
+            # tx = tx.reshape(tx.shape[0], -1)
 
             x = np.reshape(x,(x.shape[0],np.prod(x.shape[1:])))
             tx = np.reshape(tx ,(tx.shape[0],np.prod(tx.shape[1:])))
@@ -288,20 +289,20 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     ######################################################################################
     # FEATURE SELECTION
     ######################################################################################
-    def feature_selection(xx, txx):
-        # print("feature_selection xx.shape : ", xx.shape)
-        n_components = int(math.ceil(num_feats_rel*xx.shape[1]))
+    def feature_selection(x, tx):
+        print("feature_selection x.shape : ", x.shape)
+        n_components = int(math.ceil(num_feats_rel*x.shape[1]))
 
         match extract:
             case "rbm":   # ZCA + RBM
 
                 # Calculate the mean of each of the columns
-                mean_x = np.mean(xx, axis=0)
-                mean_tx = np.mean(txx, axis=0)
+                mean_x = np.mean(x, axis=0)
+                mean_tx = np.mean(tx, axis=0)
 
                 # Center the data by subtracting the mean
-                centered_x = xx - mean_x
-                centered_tx = txx - mean_tx
+                centered_x = x - mean_x
+                centered_tx = tx - mean_tx
 
                 # Calculate the covariance matrix
                 covariance_matrix = np.cov(centered_x, rowvar=False)
@@ -324,62 +325,61 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
             case "tsne":   # tSNE
                 # FEATURE SELECTION to reduce training duration
-                if xx.shape[1] > n_components:
+                if x.shape[1] > n_components:
                     pca = PCA(n_components=n_components)
-                    xx = pca.fit_transform(xx)
-                    txx = pca.transform(txx)
+                    x = pca.fit_transform(x)
+                    tx = pca.transform(tx)
 
                 # n_components = number of output dimensions (usually 2 for 2D visualization)
                 # perplexity = a hyperparameter that controls the balance between preserving global and local structure
                 # print('\n tSNE feature_selection 1')
                 tsne = TSNE(n_components=2, perplexity=30, random_state=0)
                 # print('\n tSNE feature_selection 2')
-                x = tsne.fit_transform(xx)
+                x = tsne.fit_transform(x)
                 # print('\n tSNE feature_selection 3')
-                tx = tsne.fit_transform(txx) # scikit tsne has no 'transform' method
+                tx = tsne.fit_transform(tx) # scikit tsne has no 'transform' method
                 # print('\n tSNE feature_selection 4')
 
             case "pca":   # PCA
                 pca = PCA(n_components = n_components)
-                x = pca.fit_transform(xx)
-                tx = pca.transform(txx)
+                x = pca.fit_transform(x)
+                tx = pca.transform(tx)
 
             case "ica":   # ICA
                 fastICA = FastICA(n_components = n_components, whiten='unit-variance')
-                x = fastICA.fit_transform(xx)
-                tx = fastICA.transform(txx)
+                x = fastICA.fit_transform(x)
+                tx = fastICA.transform(tx)
 
             case "nmf":   # NMF
                 # NMF is a non-convex optimization problem, so the results may vary with different initializations
                 nmf = NMF(n_components = n_components, init='random', random_state=0)
-                x = nmf.fit_transform(xx)
-                tx = nmf.fit_transform(txx) # scikit has no separate transform() function for NMF
-                # xx_features = nmf.components_
+                x = nmf.fit_transform(x)
+                tx = nmf.fit_transform(tx) # scikit has no separate transform() function for NMF
+                # x_features = nmf.components_
 
             case "ae":   # Autoencoder
 
                 # Basic Autoencoder
-                autoencoder = Autoencoder(n_components, xx.shape[1:])
+                autoencoder = Autoencoder(n_components, x.shape[1:])
 
                 # # Convolution Autoencoder
                 # autoencoder = ConvAutoencoder()
 
                 autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
-                autoencoder.fit(xx, xx,
+                autoencoder.fit(x, x,
                                 epochs=epochs,
                                 shuffle=True,
-                                validation_data=(txx, txx))
+                                validation_data=(tx, tx))
 
-                x = autoencoder.encoder(xx).numpy()
-                tx = autoencoder.encoder(txx).numpy()
+                x = autoencoder.encoder(x).numpy()
+                tx = autoencoder.encoder(tx).numpy()
 
             # case "mrmr":   # MRMR feature reduction
-            #     pymrmr.mRMR(xx, 'MID',6)
+            #     pymrmr.mRMR(x, 'MID',6)
 
 
             case _:
-                x = xx
-                tx = txx
+                pass
 
         return x, tx
 
@@ -390,13 +390,14 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     # https://www.tandfonline.com/doi/abs/10.1080/01621459.1980.10477430
     ######################################################################################
     def feature_engineering(x,tx,order=order):
-        # print('feature_engineering')
+        print(f'feature_engineering x.shape {x.shape} ; tx.shape {tx.shape}')
 
         match feat_type:
             case 'mrmr':
                 pass
 
             case 'manual':
+                print('Manual feature bagging')
                 # generate different set of combination of features
                 # the count of features in a feature set is bounded by the order value
                 orderings = list(itertools.chain.from_iterable(itertools.combinations(range(x.shape[1]),i) for i in range(1,order+1)))
@@ -409,7 +410,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                 if num_feats < min_feats:
                     num_feats = min_feats
 
-                # print(num_feats)
+                print(num_feats)
 
                 # multiply the values of the features in the feature set
                 xx,txx=[],[]
@@ -417,7 +418,7 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                     # print('update_order for-loop: order =={}'.format(order))
                     xx.append(np.prod([x[:,i] for i in order],axis=0))
                     txx.append(np.prod([tx[:,i] for i in order],axis=0))
-                # print('update order: xx.shape {}'.format(np.array(xx).shape))
+                # print('update order: x.shape {}'.format(np.array(x).shape))
 
                 x = np.array(xx).T
                 tx = np.array(txx).T
@@ -435,13 +436,8 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
     ######################################################################################
     # ENSEMBLE
     ######################################################################################
-    def one_model(xx,txx):
-        # print('one_model')
-
-        x, tx = pre_process(xx,txx)
-        x, tx = feature_selection(x,tx)
-        x, tx = feature_engineering(x,tx)
-
+    def one_model(x,tx):
+        print('one_model')
         # eqn. 2 from the DEAN paper
         goal=np.ones(len(x))
 
@@ -469,10 +465,15 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
 
         return pred
 
+    print(f"prep is {prep}")
+    x, tx = pre_process(x,tx)
+    x, tx = feature_selection(x,tx)
+    x, tx = feature_engineering(x,tx)
+
     scores=[]
     for i in tqdm(range(no_submodels)):
         # print('sub model {} of {}'.format(i,no_submodels))
-        # print('Selected features of X : {}'.format(np.array(xx).shape))
+        # print('Selected features of X : {}'.format(np.array(x).shape))
         pred=one_model(x,tx)
         scores.append(pred)
 

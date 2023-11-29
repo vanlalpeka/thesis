@@ -34,6 +34,7 @@ logger=logging.getLogger()
 #Now we are going to Set the threshold of logger to DEBUG 
 logger.setLevel(logging.DEBUG) 
 
+print("START")
 logger.info('START')
 
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -45,8 +46,10 @@ try:
         # params=csv.reader(f)
 
         for param in params:
-            for i in range(10):
-                for c in range(10):
+            for c in range(10):
+                print(f'Class-{c}')
+                for i in range(10):
+                    print(f'{i} out of 10')
                     start_time = time.time()
 
                     normal_class = c
@@ -72,8 +75,7 @@ try:
                     tyy = np.concatenate((tyy, anomalies_y_test))
 
                     # Print the shapes of the datasets
-                    # print("txx tyy set shape:", txx.shape, tyy.shape)
-
+                    print("txx tyy set shape:", txx.shape, tyy.shape)
                     pred = sean(xx, txx, no_submodels = int(param["no_submodels"]), prep=param["prep"], extract=param["extract"], submodel=param["submodel"])
 
                     end_time = time.time()
