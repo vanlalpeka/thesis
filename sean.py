@@ -6,8 +6,8 @@ import pandas as pd
 import imgaug as ia
 import imgaug.augmenters as iaa
 
-from sklearn.linear_model import LinearRegression, LassoCV, RidgeClassifierCV, ElasticNetCV, LogisticRegressionCV
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from sklearn.linear_model import LinearRegression, LassoCV, RidgeClassifierCV, ElasticNetCV, LogisticRegressionCV, SGDOneClassSVM
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, PolynomialFeatures
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import FastICA, PCA, NMF
 from sklearn.metrics import roc_auc_score
@@ -15,8 +15,10 @@ from sklearn.manifold import TSNE
 from sklearn.tree import DecisionTreeClassifier
 
 import tensorflow as tf
-from tensorflow.keras import datasets, layers, models, losses, Model
+from tensorflow.keras import datasets, losses
 from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Input, Flatten, Dense, Reshape, Conv2D, Conv2DTranspose
 
 from tqdm import tqdm
 
@@ -32,12 +34,12 @@ class Autoencoder(Model):
         self.latent_dim = latent_dim
         self.shape = shape
         self.encoder = tf.keras.Sequential([
-          layers.Flatten(),
-          layers.Dense(latent_dim, activation='relu'),
+          Flatten(),
+          Dense(latent_dim, activation='relu'),
         ])
         self.decoder = tf.keras.Sequential([
-          layers.Dense(tf.math.reduce_prod(shape), activation='sigmoid'),
-          layers.Reshape(shape)
+          Dense(tf.math.reduce_prod(shape), activation='sigmoid'),
+          Reshape(shape)
         ])
 
     def call(self, x):
@@ -50,14 +52,14 @@ class ConvAutoencoder(Model):
     def __init__(self):
         super(ConvAutoencoder, self).__init__()
         self.encoder = tf.keras.Sequential([
-          layers.Input(shape=(28, 28, 1)),
-          layers.Conv2D(16, (3, 3), activation='relu', padding='same', strides=2),
-          layers.Conv2D(8, (3, 3), activation='relu', padding='same', strides=2)])
+          Input(shape=(28, 28, 1)),
+          Conv2D(16, (3, 3), activation='relu', padding='same', strides=2),
+          Conv2D(8, (3, 3), activation='relu', padding='same', strides=2)])
 
         self.decoder = tf.keras.Sequential([
-          layers.Conv2DTranspose(8, kernel_size=3, strides=2, activation='relu', padding='same'),
-          layers.Conv2DTranspose(16, kernel_size=3, strides=2, activation='relu', padding='same'),
-          layers.Conv2D(1, kernel_size=(3, 3), activation='sigmoid', padding='same')])
+          Conv2DTranspose(8, kernel_size=3, strides=2, activation='relu', padding='same'),
+          Conv2DTranspose(16, kernel_size=3, strides=2, activation='relu', padding='same'),
+          Conv2D(1, kernel_size=(3, 3), activation='sigmoid', padding='same')])
 
     def call(self, x):
         encoded = self.encoder(x)
@@ -177,36 +179,34 @@ class RBM:
 
 
 
-def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=10, order=2, relative_feats=True, min_feats=3, prep=[], extract='ica', submodel='lin', feat_type='manual', epochs=10):
+def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, order=2, prep=[], extract='ica', submodel='lin',feat_reduce_then_bagging=True, interaction_terms_then_randomize=True, desired_variance_ratio = 0.95):
 
-    # print('In SEAN')
-    # print('Params: number of submodels {} \n Linear? {} \n Feature Selector? {} \n Relative features? {} \n Altnorm? {} \n Min Features? {} \n'.format(no_submodels, justlin,projections,relative_feats,altnorm,min_feats))
     ######################################################################################
     # PRE-PROCESSING
     ######################################################################################
-    def pre_process(x,tx):
-        print('pre_process')
+    def pre_process(X_train, X_test):
         # image dataset
-        if len(x.shape) > 2:
+        if len(X_train.shape) > 2:
 
             if 'canny' in prep:
                 # A value close to 1.0 means that only the edge image is visible.
                 # A value close to 0.0 means that only the original image is visible.
                 # If a tuple (a, b), a random value from the range a <= x <= b will be sampled per image.
                 aug = iaa.Canny(alpha=(0.75, 1.0))
-                x = aug(images=x)
+                X_train = aug(images=X_train)
 
             if 'clahe' in prep:
                 # CLAHE on all channels of the images
                 aug = iaa.AllChannelsCLAHE()
-                x = aug(images=x)
+                X_train = aug(images=X_train)
 
             if 'blur' in prep:
                 # Blur each image with a gaussian kernel with a sigma of 3.0
                 aug = iaa.GaussianBlur(sigma=(0.0, 3.0))
-                x = aug(images=x)
+                X_train = aug(images=X_train)
 
             if 'augment' in prep:
+                # append augmented dataset to the existing dataset
                 ia.seed(1)
 
                 seq = iaa.Sequential([
@@ -240,241 +240,255 @@ def sean(x, tx, cept=False, no_submodels=5000, num_feats_rel=0.2, num_feats_abs=
                     )
                 ], random_order=True) # apply augmenters in random order
 
-                augmented_images = seq(images=x)
-                x = np.concatenate((x,augmented_images))
+                augmented_images = seq(images=X_train)
+                X_train = np.concatenate((X_train, augmented_images))
 
             if 'gray' in prep:
-                x = np.dot(x[..., :3], [0.2126 , 0.7152 , 0.0722 ])
-                tx = np.dot(tx[..., :3], [0.2126 , 0.7152 , 0.0722 ])
+                X_train = np.dot(X_train[..., :3], [0.2126 , 0.7152 , 0.0722 ])
+                X_test = np.dot(X_test[..., :3], [0.2126 , 0.7152 , 0.0722 ])
 
             # print('flatten images')
             # Flatten the images
-            # x = x.reshape(x.shape[0], -1)
-            # tx = tx.reshape(tx.shape[0], -1)
+            X_train = X_train.reshape(X_train.shape[0], -1)
+            X_test = X_test.reshape(X_test.shape[0], -1)
 
-            x = np.reshape(x,(x.shape[0],np.prod(x.shape[1:])))
-            tx = np.reshape(tx ,(tx.shape[0],np.prod(tx.shape[1:])))
-            # print('done flattening images. x.shape, tx.shape : ', x.shape, tx.shape)
+            # X_train = np.reshape(X_train,(X_train.shape[0],np.prod(X_train.shape[1:])))
+            # X_test = np.reshape(X_test ,(X_test.shape[0],np.prod(X_test.shape[1:])))
+            # print('done flattening images. x.shape, X_test.shape : ', x.shape, X_test.shape)
 
         # [0,1] Normalization
         if 'norm' in prep:
             scaler = MinMaxScaler()
-            x = scaler.fit_transform(x)
-            tx = scaler.transform(tx)
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
 
         # [0.5,1] Normalization
         if 'altnorm' in prep:
             scaler = MinMaxScaler()
-            x = scaler.fit_transform(x)
-            tx = scaler.transform(tx)
-            x=(1+x)/2
-            tx=(1+tx)/2
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
+            X_train=(1+X_train)/2
+            X_test=(1+X_test)/2
 
         if 'std' in prep:
             scaler = StandardScaler()
-            x = scaler.fit_transform(x)
-            tx = scaler.transform(tx)
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
 
-            # print("Less than zero:", x[x<0])
+            # print("Less than zero:", X_train[X_train<0])
 
         if 'robust' in prep:
             scaler = RobustScaler()
-            x = scaler.fit_transform(x)
-            tx = scaler.transform(tx)
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
 
-        # print("pre_process: x.shape:",x.shape)
+        # print("pre_process : X_train.shape X_train.shape : ", X_train.shape, X_test.shape)
 
-        return x,tx
+        return X_train, X_test
 
     ######################################################################################
     # FEATURE SELECTION
     ######################################################################################
-    def feature_selection(x, tx):
-        print("feature_selection x.shape : ", x.shape)
-        n_components = int(math.ceil(num_feats_rel*x.shape[1]))
+    def feature_reduction(X_train, X_test):
+        n_components = int(math.ceil(num_feats_rel*X_train.shape[1]))
+        max_epochs = int(np.sqrt(X_train.shape[1]) * 10)
 
-        match extract:
-            case "rbm":   # ZCA + RBM
+        if extract == "rbm":   # ZCA + RBM
+            # Calculate the mean of each of the columns
+            mean_X_train = np.mean(X_train, axis=0)
+            mean_X_test = np.mean(X_test, axis=0)
 
-                # Calculate the mean of each of the columns
-                mean_x = np.mean(x, axis=0)
-                mean_tx = np.mean(tx, axis=0)
+            # Center the data by subtracting the mean
+            centered_X_train = X_train - mean_X_train
+            centered_X_test = X_test - mean_X_test
 
-                # Center the data by subtracting the mean
-                centered_x = x - mean_x
-                centered_tx = tx - mean_tx
+            # Calculate the covariance matrix
+            covariance_matrix = np.cov(centered_X_train, rowvar=False)
 
-                # Calculate the covariance matrix
-                covariance_matrix = np.cov(centered_x, rowvar=False)
+            # Perform eigenvalue decomposition on the covariance matrix
+            eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
 
-                # Perform eigenvalue decomposition on the covariance matrix
-                eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+            # Calculate the ZCA components
+            zca_components = np.dot(eigenvectors, np.dot(np.diag(1.0 / np.sqrt(eigenvalues + 1e-5)), eigenvectors.T))
 
-                # Calculate the ZCA components
-                zca_components = np.dot(eigenvectors, np.dot(np.diag(1.0 / np.sqrt(eigenvalues + 1e-5)), eigenvectors.T))
+            # Apply ZCA whitening to the data
+            zca_whitened_X_train = np.dot(centered_X_train, zca_components)
+            zca_whitened_X_test = np.dot(centered_X_test, zca_components)
 
-                # Apply ZCA whitening to the data
-                zca_whitened_x = np.dot(centered_x, zca_components)
-                zca_whitened_tx = np.dot(centered_tx, zca_components)
-
-                # RBM
-                r = RBM(num_visible = zca_whitened_x.shape[1], num_hidden = n_components)
-                r.train(zca_whitened_x, max_epochs = epochs)
-                x = r.run_visible(zca_whitened_x)
-                tx = r.run_visible(zca_whitened_tx)
-
-            case "tsne":   # tSNE
-                # FEATURE SELECTION to reduce training duration
-                if x.shape[1] > n_components:
-                    pca = PCA(n_components=n_components)
-                    x = pca.fit_transform(x)
-                    tx = pca.transform(tx)
-
-                # n_components = number of output dimensions (usually 2 for 2D visualization)
-                # perplexity = a hyperparameter that controls the balance between preserving global and local structure
-                # print('\n tSNE feature_selection 1')
-                tsne = TSNE(n_components=2, perplexity=30, random_state=0)
-                # print('\n tSNE feature_selection 2')
-                x = tsne.fit_transform(x)
-                # print('\n tSNE feature_selection 3')
-                tx = tsne.fit_transform(tx) # scikit tsne has no 'transform' method
-                # print('\n tSNE feature_selection 4')
-
-            case "pca":   # PCA
-                pca = PCA(n_components = n_components)
-                x = pca.fit_transform(x)
-                tx = pca.transform(tx)
-
-            case "ica":   # ICA
-                fastICA = FastICA(n_components = n_components, whiten='unit-variance')
-                x = fastICA.fit_transform(x)
-                tx = fastICA.transform(tx)
-
-            case "nmf":   # NMF
-                # NMF is a non-convex optimization problem, so the results may vary with different initializations
-                nmf = NMF(n_components = n_components, init='random', random_state=0)
-                x = nmf.fit_transform(x)
-                tx = nmf.fit_transform(tx) # scikit has no separate transform() function for NMF
-                # x_features = nmf.components_
-
-            case "ae":   # Autoencoder
-
-                # Basic Autoencoder
-                autoencoder = Autoencoder(n_components, x.shape[1:])
-
-                # # Convolution Autoencoder
-                # autoencoder = ConvAutoencoder()
-
-                autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
-                autoencoder.fit(x, x,
-                                epochs=epochs,
-                                shuffle=True,
-                                validation_data=(tx, tx))
-
-                x = autoencoder.encoder(x).numpy()
-                tx = autoencoder.encoder(tx).numpy()
-
-            # case "mrmr":   # MRMR feature reduction
-            #     pymrmr.mRMR(x, 'MID',6)
+            # RBM
+            r = RBM(num_visible = zca_whitened_X_train.shape[1], num_hidden = n_components)
+            r.train(zca_whitened_X_train, max_epochs = max_epochs)
+            X_train = r.run_visible(zca_whitened_X_train)
+            X_test = r.run_visible(zca_whitened_X_test)
 
 
-            case _:
-                pass
 
-        return x, tx
+
+
+        if extract == "tsne":   # tSNE
+            # FEATURE SELECTION to reduce training duration
+            if X_train.shape[1] > n_components:
+                pca = PCA(n_components=n_components)
+                X_train = pca.fit_transform(X_train)
+                X_test = pca.transform(X_test)
+
+            # n_components = number of output dimensions (usually 2 for 2D visualization)
+            # perplexity = a hyperparameter that controls the balance between preserving global and local structure
+            # print('\n tSNE feature_reduction 1')
+            tsne = TSNE(n_components=2, perplexity=30, random_state=0)
+            # print('\n tSNE feature_reduction 2')
+            X_train = tsne.fit_transform(X_train)
+            # print('\n tSNE feature_reduction 3')
+            X_test = tsne.fit_transform(X_test) # scikit tsne has no 'transform' method
+            # print('\n tSNE feature_reduction 4')
+
+        if extract == "pca":   # pca
+            # pca = PCA()
+            # pca.fit_transform(X_train)
+
+            # # Calculate the cumulative explained variance
+            # cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+
+            # # Determine the number of components to retain (e.g., 95% of variance)
+            # num_components = np.argmax(cumulative_variance >= desired_variance_ratio) + 1
+
+            # # Apply PCA with the selected number of components to the training and testing sets
+            # pca = PCA(n_components = num_components)
+
+            pca = PCA(n_components = n_components)
+            X_train = pca.fit_transform(X_train)
+            X_test = pca.transform(X_test)
+
+        if extract == "ica":   # ica
+            fastICA = FastICA(n_components = n_components, whiten='unit-variance')
+            X_train = fastICA.fit_transform(X_train)
+            X_test = fastICA.transform(X_test)
+
+        if extract == "nmf":   # nmf
+            # NMF is a non-convex optimization problem, so the results may vary with different initializations
+            nmf = NMF(n_components = n_components, init='random', random_state=0)
+            X_train = nmf.fit_transform(X_train)
+            X_test = nmf.fit_transform(X_test) # scikit has no separate transform() function for NMF
+            # X_train_features = nmf.components_
+
+        if extract == "ae":   # Autoencoder
+            # Basic Autoencoder
+            autoencoder = Autoencoder(n_components, X_train.shape[1:])
+
+            # # Convolution Autoencoder
+            # autoencoder = ConvAutoencoder()
+            early_stopping = EarlyStopping(monitor='val_loss', patience=2, restore_best_weights=True)
+
+            autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
+            autoencoder.fit(X_train, X_train,
+                            epochs=max_epochs,
+                            shuffle=True,
+                            validation_data=(X_test, X_test),
+                            callbacks=[early_stopping]
+                            )
+
+            X_train = autoencoder.encoder(X_train).numpy()
+            X_test = autoencoder.encoder(X_test).numpy()
+
+        # print(f"feature_reduction {extract} X_train.shape : {X_train.shape},  X_test.shape: {X_test.shape}")
+
+        return X_train, X_test
 
     ######################################################################################
-    # FEATURE ENGINEERING
+    # FEATURE BAGGING
     # First, standardize (mean=0, variance=1) the data; second, generate interaction terms.
     # This is to prevent multicollinearity among the new (engineered) features
     # https://www.tandfonline.com/doi/abs/10.1080/01621459.1980.10477430
     ######################################################################################
-    def feature_engineering(x,tx,order=order):
-        print(f'feature_engineering x.shape {x.shape} ; tx.shape {tx.shape}')
+    def feature_bagging(X_train, X_test,order=order):
+        # generate different set of combination of features
+        # the count of features in a feature set is bounded by the order value
+        np.random.seed(42)
+        X_train = pd.DataFrame(X_train, columns=[f'feature_{i}' for i in range(X_train.shape[1])])
+        X_test = pd.DataFrame(X_test, columns=[f'feature_{i}' for i in range(X_test.shape[1])])
+        num_feats = int(math.ceil(num_feats_rel*X_train.shape[1]))
 
-        match feat_type:
-            case 'mrmr':
-                pass
+        if interaction_terms_then_randomize:
+            # Build interaction terms using PolynomialFeatures
+            poly = PolynomialFeatures(degree=order, include_bias=False)
+            X_train_interaction_terms = pd.DataFrame(poly.fit_transform(X_train), columns=poly.get_feature_names_out(X_train.columns))
+            X_test_interaction_terms = pd.DataFrame(poly.transform(X_test), columns=poly.get_feature_names_out(X_test.columns))
+            # print('interaction_terms_then_randomize : X_train_interaction_terms ', X_train_interaction_terms)
 
-            case 'manual':
-                print('Manual feature bagging')
-                # generate different set of combination of features
-                # the count of features in a feature set is bounded by the order value
-                orderings = list(itertools.chain.from_iterable(itertools.combinations(range(x.shape[1]),i) for i in range(1,order+1)))
+            # Select a random subset of features (excluding the interaction terms)
+            selected_features = np.random.choice(X_train.columns, size=num_feats, replace=False)
+            # print('interaction_terms_then_randomize : selected_features ', selected_features)
 
-                if relative_feats:
-                    num_feats = int(math.ceil(num_feats_rel*len(orderings)))
-                else:
-                    num_feats = num_feats_abs
+            # Extract the selected features from the interaction terms
+            X_train = X_train_interaction_terms[selected_features]
+            X_test = X_test_interaction_terms[selected_features]
 
-                if num_feats < min_feats:
-                    num_feats = min_feats
+        else:
+            # Select a random subset of features
+            selected_features = np.random.choice(X_train.columns, size=num_feats, replace=False)
 
-                print(num_feats)
+            # Extract the selected features from the dataset
+            X_train_selected_features = X_train[selected_features]
+            X_test_selected_features = X_test[selected_features]
 
-                # multiply the values of the features in the feature set
-                xx,txx=[],[]
-                for order in orderings:
-                    # print('update_order for-loop: order =={}'.format(order))
-                    xx.append(np.prod([x[:,i] for i in order],axis=0))
-                    txx.append(np.prod([tx[:,i] for i in order],axis=0))
-                # print('update order: x.shape {}'.format(np.array(x).shape))
+            # Build interaction terms using PolynomialFeatures
+            poly = PolynomialFeatures(degree=order, include_bias=False)
+            X_train = pd.DataFrame(poly.fit_transform(X_train_selected_features), columns=poly.get_feature_names_out(selected_features))
+            X_test = pd.DataFrame(poly.transform(X_test_selected_features), columns=poly.get_feature_names_out(selected_features))
 
-                x = np.array(xx).T
-                tx = np.array(txx).T
+            # # Select a random subset of features (excluding the interaction terms)
+            # selected_features = np.random.choice(X_train.columns, size=num_feats, replace=False)
 
-                if num_feats > x.shape[1]:
-                    num_feats = x.shape[1]
+            # # Extract the selected features from the interaction terms
+            # X_train = X_train[selected_features]
+            # X_test = X_test[selected_features]
 
-                # select random features from the interaction terms
-                feats = np.random.choice(range(x.shape[1]), num_feats, replace=False)
-                return x[:,feats],tx[:,feats]
+        # print("feature_bagging X_train.shape  X_test.shape: ", X_train.shape, X_test.shape)
 
-            case _:
-                raise Exception('Invalid feat_type')
+        return X_train, X_test
+
 
     ######################################################################################
     # ENSEMBLE
     ######################################################################################
-    def one_model(x,tx):
-        print('one_model')
-        # eqn. 2 from the DEAN paper
-        goal=np.ones(len(x))
+    def one_model(X_train, X_test):
+        # print('one_model')
 
-        match submodel:
-            case "lin":
-                cv = LinearRegression(fit_intercept=cept).fit(x,goal)
-            case "lasso":
-                cv = LassoCV(fit_intercept=cept).fit(x,goal)
-            case "ridge":
-                cv = RidgeClassifierCV(fit_intercept=cept).fit(x,goal)
-            case "elastic":
-                cv = ElasticNetCV(fit_intercept=cept).fit(x,goal)
-            case "log":
-                cv = LogisticRegressionCV(fit_intercept=cept).fit(x,goal)
-            # case "dtree":
-            #     cv = DecisionTreeClassifier().fit(x,goal)
-            case _:
-                raise Exception("Please specify a submodel type")
+        # eqn. 2 from the DEAN paper
+        goal=np.ones(len(X_train))
+
+        if submodel ==  "lin":
+            cv = LinearRegression(fit_intercept=cept).fit(X_train, goal)
+        if submodel ==  "lasso":
+            cv = LassoCV(fit_intercept=cept).fit(X_train, goal)
+        if submodel ==  "ridge":
+            cv = RidgeClassifierCV(fit_intercept=cept).fit(X_train, goal)
+        if submodel ==  "elastic":
+            cv = ElasticNetCV(fit_intercept=cept).fit(X_train, goal)
+        if submodel ==  "svm":
+            cv = SGDOneClassSVM(fit_intercept=cept).fit(X_train, goal)
 
         # eqn. 4 from the DEAN paper
-        meanv=np.mean(cv.predict(x))
+        meanv = np.mean(cv.predict(X_train))
         # print("meanv=np.mean(cv.predict(x)) : ", meanv)
-        pred=np.square(cv.predict(tx)-meanv)
+        pred = np.square(cv.predict(X_test)-meanv)
         # print("\n pred=np.square(cv.predict(tx)-meanv) : ", pred)
 
         return pred
 
-    print(f"prep is {prep}")
-    x, tx = pre_process(x,tx)
-    x, tx = feature_selection(x,tx)
-    x, tx = feature_engineering(x,tx)
+    X_train, X_test = pre_process(X_train, X_test)
+    if feat_reduce_then_bagging:
+        X_train, X_test = feature_reduction(X_train, X_test)
+        X_train, X_test = feature_bagging(X_train, X_test)
+    else:
+        X_train, X_test = feature_bagging(X_train, X_test)
+        X_train, X_test = feature_reduction(X_train, X_test)
 
     scores=[]
     for i in tqdm(range(no_submodels)):
         # print('sub model {} of {}'.format(i,no_submodels))
-        # print('Selected features of X : {}'.format(np.array(x).shape))
-        pred=one_model(x,tx)
+        # print('Selected features of X : {}'.format(np.array(X_train).shape))
+        pred = one_model(X_train, X_test)
         scores.append(pred)
 
     #features=list(generate_subsets(list(range(x.shape[1])),num_feats))

@@ -1,41 +1,33 @@
 prep;extract;submodel;no_submodels
-[];ae;lin;50
-["altnorm"];ae;lin;50
-["altnorm","canny"];ae;lin;50
-["altnorm","clahe"];ae;lin;50
-["altnorm","blur"];ae;lin;50
-["altnorm","augment"];ae;lin;50
-["altnorm","gray"];ae;lin;50
-["altnorm","blur","clahe","blur","augment","gray"];ae;lin;50
-[];ae;lasso;50
-["altnorm"];ae;lasso;50
-["altnorm","canny"];ae;lasso;50
-["altnorm","clahe"];ae;lasso;50
-["altnorm","blur"];ae;lasso;50
-["altnorm","augment"];ae;lasso;50
-["altnorm","gray"];ae;lasso;50
-["altnorm","blur","clahe","blur","augment","gray"];ae;lasso;50
-[];ae;ridge;50
-["altnorm"];ae;ridge;50
-["altnorm","canny"];ae;ridge;50
-["altnorm","clahe"];ae;ridge;50
-["altnorm","blur"];ae;ridge;50
-["altnorm","augment"];ae;ridge;50
-["altnorm","gray"];ae;ridge;50
-["altnorm","blur","clahe","blur","augment","gray"];ae;ridge;50
-[];ae;elastic;50
-["altnorm"];ae;elastic;50
-["altnorm","canny"];ae;elastic;50
-["altnorm","clahe"];ae;elastic;50
-["altnorm","blur"];ae;elastic;50
-["altnorm","augment"];ae;elastic;50
-["altnorm","gray"];ae;elastic;50
-["altnorm","blur","clahe","blur","augment","gray"];ae;elastic;50
-[];ae;log;50
-["altnorm"];ae;log;50
-["altnorm","canny"];ae;log;50
-["altnorm","clahe"];ae;log;50
-["altnorm","blur"];ae;log;50
-["altnorm","augment"];ae;log;50
-["altnorm","gray"];ae;log;50
-["altnorm","blur","clahe","blur","augment","gray"];ae;log;50
+["norm"];pca;lin;500
+["robust"];pca;lin;500
+["std", "canny"];pca;lin;500
+["norm", "canny"];pca;lin;500
+["robust", "canny"];pca;lin;500
+["std", "clahe" ];pca;lin;500
+["norm",  "clahe"];pca;lin;500
+["robust",  "clahe"];pca;lin;500
+["std", "blur" ];pca;lin;500
+["norm",  "blur"];pca;lin;500
+["robust",  "blur"];pca;lin;500
+["std", "augment" ];pca;lin;500
+["norm",  "augment"];pca;lin;500
+["robust",  "augment"];pca;lin;500
+["std", "gray" ];pca;lin;500
+["norm",  "gray"];pca;lin;500
+["robust",  "gray"];pca;lin;500
+["std", "canny",  "gray"];pca;lin;500
+["norm", "canny",  "gray"];pca;lin;500
+["robust", "canny",  "gray"];pca;lin;500
+["std", "clahe" ,  "gray"];pca;lin;500
+["norm",  "clahe",  "gray"];pca;lin;500
+["robust",  "clahe",  "gray"];pca;lin;500
+["std", "blur",  "gray" ];pca;lin;500
+["norm",  "blur",  "gray"];pca;lin;500
+["robust",  "blur",  "gray"];pca;lin;500
+["std", "augment" ,  "gray"];pca;lin;500
+["norm",  "augment",  "gray"];pca;lin;500
+["robust",  "augment",  "gray"];pca;lin;500
+["std", "canny", "clahe", "blur", "augment","gray"];pca;lin;500
+["norm", "canny", "clahe", "blur", "augment","gray"];pca;lin;500
+["robust", "canny", "clahe", "blur", "augment","gray"];pca;lin;500
