@@ -1,0 +1,10 @@
+prep;extract;submodel;no_submodels
+["std"];ica;lin;50
+["norm"];ica;lin;50
+["std"];ae;lin;50
+["norm"];ae;lin;50
+["std"];rbm;lin;50
+["norm"];rbm;lin;50
+["norm"];nmf;lin;50
+["std"];tsne;lin;50
+["norm"];tsne;lin;50

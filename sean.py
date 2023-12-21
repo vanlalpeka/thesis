@@ -26,7 +26,7 @@ from tqdm import tqdm
 
 import math
 import itertools
-
+import time
 
 class Autoencoder(Model):
     def __init__(self, latent_dim, shape):
@@ -48,25 +48,7 @@ class Autoencoder(Model):
         return decoded
 
 
-class ConvAutoencoder(Model):
-    def __init__(self):
-        super(ConvAutoencoder, self).__init__()
-        self.encoder = tf.keras.Sequential([
-          Input(shape=(28, 28, 1)),
-          Conv2D(16, (3, 3), activation='relu', padding='same', strides=2),
-          Conv2D(8, (3, 3), activation='relu', padding='same', strides=2)])
-
-        self.decoder = tf.keras.Sequential([
-          Conv2DTranspose(8, kernel_size=3, strides=2, activation='relu', padding='same'),
-          Conv2DTranspose(16, kernel_size=3, strides=2, activation='relu', padding='same'),
-          Conv2D(1, kernel_size=(3, 3), activation='sigmoid', padding='same')])
-
-    def call(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded
-
-# https://github.com/echen/restricted-boltzmann-machines/blob/master/rbm.py
+#https://github.com/echen/restricted-boltzmann-machines/blob/master/rbm.py
 class RBM:
 
   def __init__(self, num_visible, num_hidden):
@@ -93,7 +75,7 @@ class RBM:
     self.weights = np.insert(self.weights, 0, 0, axis = 0)
     self.weights = np.insert(self.weights, 0, 0, axis = 1)
 
-  def train(self, data, max_epochs = 1000, learning_rate = 0.1):
+  def train(self, data, max_epochs = 1000, learning_rate = 0.1, patience = 3, wait = 0, best = float('inf')):
     """
     Train the machine.
 
@@ -108,34 +90,47 @@ class RBM:
     data = np.insert(data, 0, 1, axis = 1)
 
     for epoch in range(max_epochs):
-      # Clamp to the data and sample from the hidden units.
-      # (This is the "positive CD phase", aka the reality phase.)
-      pos_hidden_activations = np.dot(data, self.weights)
-      pos_hidden_probs = self._logistic(pos_hidden_activations)
-      pos_hidden_probs[:,0] = 1 # Fix the bias unit.
-      pos_hidden_states = pos_hidden_probs > np.random.rand(num_examples, self.num_hidden + 1)
-      # Note that we're using the activation *probabilities* of the hidden states, not the hidden states
-      # themselves, when computing associations. We could also use the states; see section 3 of Hinton's
-      # "A Practical Guide to Training Restricted Boltzmann Machines" for more.
-      pos_associations = np.dot(data.T, pos_hidden_probs)
+        # Clamp to the data and sample from the hidden units.
+        # (This is the "positive CD phase", aka the reality phase.)
+        pos_hidden_activations = np.dot(data, self.weights)
+        pos_hidden_probs = self._logistic(pos_hidden_activations)
+        pos_hidden_probs[:,0] = 1 # Fix the bias unit.
+        pos_hidden_states = pos_hidden_probs > np.random.rand(num_examples, self.num_hidden + 1)
+        # Note that we're using the activation *probabilities* of the hidden states, not the hidden states
+        # themselves, when computing associations. We could also use the states; see section 3 of Hinton's
+        # "A Practical Guide to Training Restricted Boltzmann Machines" for more.
+        pos_associations = np.dot(data.T, pos_hidden_probs)
 
-      # Reconstruct the visible units and sample again from the hidden units.
-      # (This is the "negative CD phase", aka the daydreaming phase.)
-      neg_visible_activations = np.dot(pos_hidden_states, self.weights.T)
-      neg_visible_probs = self._logistic(neg_visible_activations)
-      neg_visible_probs[:,0] = 1 # Fix the bias unit.
-      neg_hidden_activations = np.dot(neg_visible_probs, self.weights)
-      neg_hidden_probs = self._logistic(neg_hidden_activations)
-      # Note, again, that we're using the activation *probabilities* when computing associations, not the states
-      # themselves.
-      neg_associations = np.dot(neg_visible_probs.T, neg_hidden_probs)
+        # Reconstruct the visible units and sample again from the hidden units.
+        # (This is the "negative CD phase", aka the daydreaming phase.)
+        neg_visible_activations = np.dot(pos_hidden_states, self.weights.T)
+        neg_visible_probs = self._logistic(neg_visible_activations)
+        neg_visible_probs[:,0] = 1 # Fix the bias unit.
 
-      # Update weights.
-      self.weights += learning_rate * ((pos_associations - neg_associations) / num_examples)
+        # The visible layer is Gaussian
+        neg_visible_probs = neg_visible_probs + np.random.normal(0, 0.1, neg_visible_probs.shape)
 
-      error = np.sum((data - neg_visible_probs) ** 2)
-      if self.debug_print:
-        print("Epoch %s: error is %s" % (epoch, error))
+        neg_hidden_activations = np.dot(neg_visible_probs, self.weights)
+        neg_hidden_probs = self._logistic(neg_hidden_activations)
+        # Note, again, that we're using the activation *probabilities* when computing associations, not the states
+        # themselves.
+        neg_associations = np.dot(neg_visible_probs.T, neg_hidden_probs)
+
+        # Update weights.
+        self.weights += learning_rate * ((pos_associations - neg_associations) / num_examples)
+
+        error = np.sum((data - neg_visible_probs) ** 2)
+        if self.debug_print:
+            print("Epoch %s: error is %s" % (epoch, error))
+
+        # early stopping
+        wait += 1
+        if error < best:
+            best = error
+            wait = 0
+
+        if wait >= patience:
+            break
 
   def run_visible(self, data):
     """
@@ -176,7 +171,6 @@ class RBM:
 
   def _logistic(self, x):
     return 1.0 / (1 + np.exp(-x))
-
 
 
 def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, order=2, prep=[], extract='ica', submodel='lin',feat_reduce_then_bagging=True, interaction_terms_then_randomize=True, desired_variance_ratio = 0.95):
@@ -262,23 +256,8 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
 
-        # [0.5,1] Normalization
-        if 'altnorm' in prep:
-            scaler = MinMaxScaler()
-            X_train = scaler.fit_transform(X_train)
-            X_test = scaler.transform(X_test)
-            X_train=(1+X_train)/2
-            X_test=(1+X_test)/2
-
         if 'std' in prep:
             scaler = StandardScaler()
-            X_train = scaler.fit_transform(X_train)
-            X_test = scaler.transform(X_test)
-
-            # print("Less than zero:", X_train[X_train<0])
-
-        if 'robust' in prep:
-            scaler = RobustScaler()
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
 
@@ -318,11 +297,9 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
             # RBM
             r = RBM(num_visible = zca_whitened_X_train.shape[1], num_hidden = n_components)
             r.train(zca_whitened_X_train, max_epochs = max_epochs)
+            # r.train(zca_whitened_X_train, max_epochs = 25)
             X_train = r.run_visible(zca_whitened_X_train)
             X_test = r.run_visible(zca_whitened_X_test)
-
-
-
 
 
         if extract == "tsne":   # tSNE
@@ -335,7 +312,7 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
             # n_components = number of output dimensions (usually 2 for 2D visualization)
             # perplexity = a hyperparameter that controls the balance between preserving global and local structure
             # print('\n tSNE feature_reduction 1')
-            tsne = TSNE(n_components=2, perplexity=30, random_state=0)
+            tsne = TSNE(n_components=3, perplexity=30, random_state=0)
             # print('\n tSNE feature_reduction 2')
             X_train = tsne.fit_transform(X_train)
             # print('\n tSNE feature_reduction 3')
@@ -377,7 +354,7 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
 
             # # Convolution Autoencoder
             # autoencoder = ConvAutoencoder()
-            early_stopping = EarlyStopping(monitor='val_loss', patience=2, restore_best_weights=True)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 
             autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
             autoencoder.fit(X_train, X_train,
@@ -461,8 +438,6 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
             cv = LinearRegression(fit_intercept=cept).fit(X_train, goal)
         if submodel ==  "lasso":
             cv = LassoCV(fit_intercept=cept).fit(X_train, goal)
-        if submodel ==  "ridge":
-            cv = RidgeClassifierCV(fit_intercept=cept).fit(X_train, goal)
         if submodel ==  "elastic":
             cv = ElasticNetCV(fit_intercept=cept).fit(X_train, goal)
         if submodel ==  "svm":
@@ -476,6 +451,10 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
 
         return pred
 
+    # Set the maximum computation time (in seconds)
+    max_computation_time = 600  # 10 minutes
+    start_time = time.time()
+    
     X_train, X_test = pre_process(X_train, X_test)
     if feat_reduce_then_bagging:
         X_train, X_test = feature_reduction(X_train, X_test)
@@ -485,20 +464,33 @@ def sean(X_train, X_test, cept=False, no_submodels=5000, num_feats_rel=0.2, orde
         X_train, X_test = feature_reduction(X_train, X_test)
 
     scores=[]
-    for i in tqdm(range(no_submodels)):
-        # print('sub model {} of {}'.format(i,no_submodels))
-        # print('Selected features of X : {}'.format(np.array(X_train).shape))
-        pred = one_model(X_train, X_test)
-        scores.append(pred)
+    ensembles_executed = 0
 
-    #features=list(generate_subsets(list(range(x.shape[1])),num_feats))
+    elapsed_time = time.time() - start_time
+    if elapsed_time > max_computation_time:
+        print("Feature reduction: Time limit reached. Exiting.")
+        return np.zeros(X_test.shape[0]), ensembles_executed
 
-    scores=np.array(scores)
+    else:
+        for i in tqdm(range(no_submodels)):
+            pred = one_model(X_train, X_test)
+            scores.append(pred)
 
-    # print('Mean = {}, Variance = {}'.format(np.mean(scores,axis=0),np.var(scores,axis=0)))
+            ensembles_executed += 1
 
-    # eqn. 5 from the DEAN paper
-    return np.mean(scores,axis=0)
+            elapsed_time = time.time() - start_time
+            if elapsed_time > max_computation_time:
+                print("Ensemble: Time limit reached. Exiting loop.")
+                break
+
+        #features=list(generate_subsets(list(range(x.shape[1])),num_feats))
+
+        scores=np.array(scores)
+
+        # print('Mean = {}, Variance = {}'.format(np.mean(scores,axis=0),np.var(scores,axis=0)))
+
+        # eqn. 5 from the DEAN paper
+        return np.mean(scores,axis=0), ensembles_executed
 
 
 # # executes only when run directly, not when this file is imported into another python file

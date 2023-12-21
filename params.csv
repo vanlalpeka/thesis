@@ -1,33 +1,35 @@
 prep;extract;submodel;no_submodels
-["norm"];pca;lin;500
-["robust"];pca;lin;500
-["std", "canny"];pca;lin;500
-["norm", "canny"];pca;lin;500
-["robust", "canny"];pca;lin;500
-["std", "clahe" ];pca;lin;500
-["norm",  "clahe"];pca;lin;500
-["robust",  "clahe"];pca;lin;500
-["std", "blur" ];pca;lin;500
-["norm",  "blur"];pca;lin;500
-["robust",  "blur"];pca;lin;500
-["std", "augment" ];pca;lin;500
-["norm",  "augment"];pca;lin;500
-["robust",  "augment"];pca;lin;500
-["std", "gray" ];pca;lin;500
-["norm",  "gray"];pca;lin;500
-["robust",  "gray"];pca;lin;500
-["std", "canny",  "gray"];pca;lin;500
-["norm", "canny",  "gray"];pca;lin;500
-["robust", "canny",  "gray"];pca;lin;500
-["std", "clahe" ,  "gray"];pca;lin;500
-["norm",  "clahe",  "gray"];pca;lin;500
-["robust",  "clahe",  "gray"];pca;lin;500
-["std", "blur",  "gray" ];pca;lin;500
-["norm",  "blur",  "gray"];pca;lin;500
-["robust",  "blur",  "gray"];pca;lin;500
-["std", "augment" ,  "gray"];pca;lin;500
-["norm",  "augment",  "gray"];pca;lin;500
-["robust",  "augment",  "gray"];pca;lin;500
-["std", "canny", "clahe", "blur", "augment","gray"];pca;lin;500
-["norm", "canny", "clahe", "blur", "augment","gray"];pca;lin;500
-["robust", "canny", "clahe", "blur", "augment","gray"];pca;lin;500
+[];ae;lin;50
+["std"];ae;lin;50
+["norm"];ae;lin;50
+["robust"];ae;lin;50
+["std","canny"];ae;lin;50
+["norm","canny"];ae;lin;50
+["robust","canny"];ae;lin;50
+["std","clahe"];ae;lin;50
+["norm","clahe"];ae;lin;50
+["robust","clahe"];ae;lin;50
+["std","blur"];ae;lin;50
+["norm","blur"];ae;lin;50
+["robust","blur"];ae;lin;50
+["std","augment"];ae;lin;50
+["norm","augment"];ae;lin;50
+["robust","augment"];ae;lin;50
+["std","gray"];ae;lin;50
+["norm","gray"];ae;lin;50
+["robust","gray"];ae;lin;50
+["std","canny","gray"];ae;lin;50
+["norm","canny","gray"];ae;lin;50
+["robust","canny","gray"];ae;lin;50
+["std","clahe","gray"];ae;lin;50
+["norm","clahe","gray"];ae;lin;50
+["robust","clahe","gray"];ae;lin;50
+["std","blur","gray"];ae;lin;50
+["norm","blur","gray"];ae;lin;50
+["robust","blur","gray"];ae;lin;50
+["std","augment","gray"];ae;lin;50
+["norm","augment","gray"];ae;lin;50
+["robust","augment","gray"];ae;lin;50
+["std","canny","clahe","blur","augment","gray"];ae;lin;50
+["norm","canny","clahe","blur","augment","gray"];ae;lin;50
+["robust","canny","clahe","blur","augment","gray"];ae;lin;50

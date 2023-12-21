@@ -24,7 +24,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./logs/std_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./logs/ae_lin_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 
@@ -40,16 +40,15 @@ logger.info('START')
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
 try:
-    with open("params.csv") as f:
+    with open("params_ae_lin.csv") as f:
         # heading = next(f) 
         params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)
 
         for param in params:
             for c in range(10):
-                print(f'Class-{c}')
                 for i in range(10):
-                    print(f'{i} out of 10')
+                    print(f'Class-{c}: {i} out of 10')
                     start_time = time.time()
 
                     normal_class = c
@@ -76,12 +75,18 @@ try:
 
                     # Print the shapes of the datasets
                     print("txx tyy set shape:", txx.shape, tyy.shape)
-                    pred = sean(xx, txx, no_submodels = int(param["no_submodels"]), prep=param["prep"], extract=param["extract"], submodel=param["submodel"])
+                    pred = sean(xx, 
+                                txx, 
+                                no_submodels = int(param["no_submodels"]), 
+                                prep=param["prep"], extract=param["extract"], 
+                                submodel=param["submodel"], 
+                                interaction_terms_then_randomize=param["interaction_terms_then_randomize"]
+                                )
 
                     end_time = time.time()
                     runtime = end_time - start_time
                     auc = roc_auc_score(tyy, pred)
-                    logger.info(f'CIFAR10 Class-{normal_class} \t {param["no_submodels"]} \t {param["submodel"]} \t {param["prep"]} \t {param["extract"]} \t {runtime} \t {auc}')
+                    logger.info(f'CIFAR10 Class-{normal_class} \t {param["no_submodels"]} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
 
 except Exception:
     logger.exception("message")

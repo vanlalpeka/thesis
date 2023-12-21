@@ -1,0 +1,12 @@
+prep;extract;submodel;no_submodels
+["altnorm"];nmf;lin;50
+["altnorm","canny"];nmf;lin;50
+["altnorm","clahe"];nmf;lin;50
+["altnorm","blur"];nmf;lin;50
+["altnorm","augment"];nmf;lin;50
+["altnorm","gray"];nmf;lin;50
+["altnorm","canny","gray"];nmf;lin;50
+["altnorm","clahe","gray"];nmf;lin;50
+["altnorm","blur","gray"];nmf;lin;50
+["altnorm","augment","gray"];nmf;lin;50
+["altnorm","canny","clahe","blur","augment","gray"];nmf;lin;50
