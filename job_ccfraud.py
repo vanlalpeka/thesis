@@ -24,7 +24,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./logs/ccfraud_100_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./logs1222/ccfraud_50_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 
@@ -47,7 +47,7 @@ dataset = openml.datasets.get_dataset(
 
 
 try:
-    with open("params_ccfraud_100.csv") as f:
+    with open("params/params_ccfraud_50.csv") as f:
         # heading = next(f) 
         params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)
@@ -81,12 +81,13 @@ try:
                             prep=param["prep"], 
                             extract=param["extract"], 
                             submodel=param["submodel"], 
-                            interaction_terms_then_randomize=param["interaction_terms_then_randomize"]
+                            # interaction_terms_then_randomize=param["interaction_terms_then_randomize"]
                             )
 
                 end_time = time.time()
                 runtime = end_time - start_time
                 auc = roc_auc_score(y_test, pred)
+                print(f'AUROC : {auc}')
                 logger.info(f'CCFraud \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
 
 except Exception:

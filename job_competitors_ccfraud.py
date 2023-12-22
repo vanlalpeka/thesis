@@ -1,8 +1,10 @@
 import openml
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, roc_curve
 import tensorflow as tf
+from sklearn.preprocessing import MinMaxScaler
 
 from pyod.models.knn import KNN   # kNN detector
 from pyod.models.iforest import IForest
@@ -18,7 +20,7 @@ import os
 import datetime
 import logging 
 
-logging.basicConfig(filename=f"./logs/comps_ccfraud_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./logs/competitors_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 logger=logging.getLogger() 
@@ -33,58 +35,67 @@ classifiers = {
     'Cluster-Based Local Outlier Factor (CBLOF)': CBLOF()
 }
 
-dataset = openml.datasets.get_dataset(
-    dataset_id= 42175,  # CreditCardFraudDetection
-    download_data=True,
-    download_qualities=True,
-    download_features_meta_data=True,
-    )
+def compare_classifiers_on_tab_data(id)
+    dataset = openml.datasets.get_dataset(
+        # dataset_id= 42175,  # CreditCardFraudDetection
+        dataset_id= id,  # CreditCardFraudDetection
+        download_data=True,
+        download_qualities=True,
+        download_features_meta_data=True,
+        )
 
-for _, (clf_name, clf) in enumerate(classifiers.items()):
     X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute)
 
-    for i in range(10):
-        print(f'{i} out of 10')
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
 
-        start_time = time.time()
+    for _, (clf_name, clf) in enumerate(classifiers.items()):
 
-        # Identify indices of samples where y=1 (fraudulent transactions)
-        fraud_indices = [i for i, label in enumerate(y) if label == 1]
+        for i in range(10):
+            print(f'{i} out of 10')
 
-        X_fraud = X.loc[fraud_indices]
-        y_fraud = y.loc[fraud_indices]
+            start_time = time.time()
 
-        X_no_fraud = X.drop(fraud_indices)
-        y_no_fraud = y.drop(fraud_indices)
+            # Identify indices of samples where y=1 (fraudulent transactions)
+            fraud_indices = [i for i, label in enumerate(y) if label == 1]
 
-        # Split the data into train and test sets
-        X_train, X_test, y_train, y_test = train_test_split(X_no_fraud, y_no_fraud, test_size=0.2)
+            X_fraud = X[fraud_indices]
+            y_fraud = y[fraud_indices]
 
-        # Include all samples with y=1 in the test set
-        X_test = pd.concat([X_test, X_fraud], axis=0)
-        y_test = pd.concat([y_test, y_fraud], axis=0)
+            X_no_fraud = np.delete(X, fraud_indices, axis=0)
+            y_no_fraud = np.delete(y, fraud_indices, axis=0)
 
-        clf.fit(X_train)
+            # Split the data into train and test sets
+            X_train, X_test, y_train, y_test = train_test_split(X_no_fraud, y_no_fraud, test_size=0.2)
 
-        # # get the prediction label and outlier scores of the training data
-        # Y_train_pred = clf.labels_  # binary labels (0: inliers, 1: outliers)
-        # Y_train_scores = clf.decision_scores_  # raw outlier scores
+            # Include all samples with y=1 in the test set
+            X_test = np.concatenate((X_test, X_fraud), axis=0)
+            y_test = np.concatenate((y_test, y_fraud), axis=0)
 
-        # get the prediction on the test data
-        # y_test_pred = clf.predict(X_test)  # outlier labels (0 or 1)
-        y_test_scores = clf.decision_function(X_test)  # outlier scores
+            clf.fit(X_train)
 
-        # # it is possible to get the prediction confidence as well
-        # y_test_pred, y_test_pred_confidence = clf.predict(X_test, return_confidence=True)  # outlier labels (0 or 1) and confidence in the range of [0,1]
+            # # get the prediction label and outlier scores of the training data
+            # Y_train_pred = clf.labels_  # binary labels (0: inliers, 1: outliers)
+            # Y_train_scores = clf.decision_scores_  # raw outlier scores
 
-        end_time = time.time()
-        runtime = end_time - start_time
-        # auc = roc_auc_score(y_test, y_test_pred)
-        auc = roc_auc_score(y_test, y_test_scores)
+            # get the prediction on the test data
+            # y_test_pred = clf.predict(X_test)  # outlier labels (0 or 1)
+            y_test_scores = clf.decision_function(X_test)  # outlier scores
 
-        # print(f' y_test.shape {y_test.shape} ; pred.shape {pred.shape}')
-        print(f'\n CCFraud {clf_name} ROC_AUC = {auc}')
-        logger.info(f' {clf_name} CCFraud {runtime} \t {auc}')
+            # # it is possible to get the prediction confidence as well
+            # y_test_pred, y_test_pred_confidence = clf.predict(X_test, return_confidence=True)  # outlier labels (0 or 1) and confidence in the range of [0,1]
 
-        # # visualize the results
-        # visualize(clf_name, X_train, Y_train, X_test, y_test, Y_train_pred, y_test_pred, show_figure=True, save_figure=False)
+            end_time = time.time()
+            runtime = end_time - start_time
+            # auc = roc_auc_score(y_test, y_test_pred)
+            auc = roc_auc_score(y_test, y_test_scores)
+
+            # print(f' y_test.shape {y_test.shape} ; pred.shape {pred.shape}')
+            print(f'CCFraud {clf_name} ROC_AUC = {auc}')
+            logger.info(f'{clf_name} CCFraud {runtime} \t {auc}')
+
+            # # visualize the results
+            # visualize(clf_name, X_train, Y_train, X_test, y_test, Y_train_pred, y_test_pred, show_figure=True, save_figure=False)
+
+compare_classifiers_on_tab_data(42175)  # CreditCardFraudDetection
+compare_classifiers_on_tab_data(40900)  # Satellite soil category

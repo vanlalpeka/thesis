@@ -40,7 +40,7 @@ logger.info('START')
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
 try:
-    with open("params_ae_lin.csv") as f:
+    with open("params/params_ae_lin.csv") as f:
         # heading = next(f) 
         params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)
