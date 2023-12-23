@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import time
 
@@ -34,7 +35,7 @@ def sean(X_train, X_test, no_submodels=5000, num_feats_rel=0.2, order=2, prep=[]
     else:
         for i in tqdm(range(no_submodels)):
             # pred = one_model(X_train, X_test, submodel)
-            pred = one_model(X_train, X_test, submodel, num_feats_rel, extract, order, prep)
+            pred = one_model(X_train.to_numpy(), X_test.to_numpy(), submodel, num_feats_rel, extract, order, prep)
             scores.append(pred)
 
             ensembles_executed += 1

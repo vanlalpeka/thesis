@@ -24,7 +24,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./logs1222/ccfraud_100_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./logs1222/sat_100_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 
@@ -39,7 +39,7 @@ logger.info('START')
 
 # Replace dataset_id with the   ID of the dataset you want to load
 dataset = openml.datasets.get_dataset(
-    dataset_id= 42175,  # CreditCardFraudDetection
+    dataset_id= 40900,  # SAtellite
     download_data=True,
     download_qualities=True,
     download_features_meta_data=True,
@@ -54,7 +54,7 @@ try:
 
         for param in params:
             for i in range(10):
-                print(f'CCFraud-{param}: {i} out of 10')
+                print(f'Satellite-{param}: {i} out of 10')
                 start_time = time.time()
 
                 X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute)
@@ -88,7 +88,7 @@ try:
                 runtime = end_time - start_time
                 auc = roc_auc_score(y_test, pred)
                 print(f'AUROC : {auc}')
-                logger.info(f'CCFraud \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
+                logger.info(f'Satellite \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
 
 except Exception:
     logger.exception("message")

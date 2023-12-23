@@ -53,11 +53,11 @@ def feature_bagging(X_train, X_test, order, num_feats_rel):
 
     # Select a random subset of features (excluding the interaction terms)
     selected_features = np.random.choice(range(X_train_interaction_terms.shape[1]), size=num_feats, replace=False)
-    print('interaction_terms_then_randomize : selected_features ', selected_features)
+    # print('interaction_terms_then_randomize : selected_features ', selected_features)
 
     # Extract the selected features from the interaction terms
     X_train = X_train_interaction_terms[:,selected_features]
     X_test = X_test_interaction_terms[:,selected_features]
-    print(X_train.shape)
+    # print(X_train.shape)
 
     return X_train, X_test
