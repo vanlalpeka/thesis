@@ -2,7 +2,8 @@ import imgaug as ia
 import imgaug.augmenters as iaa
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-
+from skimage.morphology import skeletonize
+from skimage.util import invert
 
 ######################################################################################
 # PRE-PROCESSING
@@ -11,6 +12,9 @@ def pre_process(X_train, X_test, prep):
     # print(f'pre_process X_train.shape : {X_train.shape}, prep: {prep}')
     # image dataset
     if len(X_train.shape) > 2:
+        if 'skel' in prep:
+            image = invert(X_train)
+            X_train = skeletonize(image)
 
         if 'canny' in prep:
             # A value close to 1.0 means that only the edge image is visible.

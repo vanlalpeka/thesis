@@ -24,7 +24,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./logs1222/ccfraud_100_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./logs1222/ccfraud_300_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 
@@ -47,7 +47,7 @@ dataset = openml.datasets.get_dataset(
 
 
 try:
-    with open("params/p_tab_100.csv") as f:
+    with open("params/p_ccf_300.csv") as f:
         # heading = next(f) 
         params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)
@@ -69,14 +69,14 @@ try:
                 y_no_fraud = y.drop(fraud_indices)
 
                 # Split the data into train and test sets
-                X_train, X_test, y_train, y_test = train_test_split(X_no_fraud, y_no_fraud, test_size=0.2, random_state=42)
+                X_train, X_test, y_train, y_test = train_test_split(X_no_fraud, y_no_fraud, test_size=0.2)
 
                 # Include all samples with y=1 in the test set
                 X_test = pd.concat([X_test, X_fraud], axis=0)
                 y_test = pd.concat([y_test, y_fraud], axis=0)
 
-                pred, ensembles_executed = sean(X_train, 
-                            X_test, 
+                pred, ensembles_executed = sean(X_train.to_numpy(), 
+                            X_test.to_numpy(), 
                             no_submodels = int(param["no_submodels"]), 
                             prep=param["prep"], 
                             extract=param["extract"], 

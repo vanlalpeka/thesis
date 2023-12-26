@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, roc_curve
 import tensorflow as tf
-from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.datasets import mnist
 
 import csv 
 import time 
@@ -24,7 +24,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./logs1222/cifar_rbm_lin_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./logs1222/mnist_ae_lin_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 
@@ -37,10 +37,10 @@ logger.setLevel(logging.DEBUG)
 print("START")
 logger.info('START')
 
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
 try:
-    with open("params/p_cifar_rbm_lin.csv") as f:
+    with open("params/p_mnist_ae_lin.csv") as f:
         # heading = next(f) 
         params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)
@@ -48,7 +48,7 @@ try:
         for param in params:
             for c in range(10):
                 for i in range(10):
-                    print(f'CIFAR-10 rbm-lin Class-{c}: {i} out of 10')
+                    print(f'MNIST ae-lin Class-{c}: {i} out of 10')
                     start_time = time.time()
 
                     normal_class = c
@@ -88,7 +88,7 @@ try:
                     end_time = time.time()
                     runtime = end_time - start_time
                     auc = roc_auc_score(Y_test, pred)
-                    logger.info(f'CIFAR10 Class-{normal_class} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
+                    logger.info(f'MNIST Class-{normal_class} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
 
 except Exception:
     logger.exception("message")

@@ -8,7 +8,7 @@ from feature_selection import *
 from feature_bagging import *
 from one_model import *
 
-
+# X_train and X_test are ndarray
 def sean(X_train, X_test, no_submodels=5000, num_feats_rel=0.2, order=2, prep=[], extract='ica', submodel='lin',feat_reduce_then_bagging=True, interaction_terms_then_randomize=True, desired_variance_ratio = 0.95):
 
     # Set the maximum computation time (in seconds)
@@ -35,7 +35,7 @@ def sean(X_train, X_test, no_submodels=5000, num_feats_rel=0.2, order=2, prep=[]
     else:
         for i in tqdm(range(no_submodels)):
             # pred = one_model(X_train, X_test, submodel)
-            pred = one_model(X_train.to_numpy(), X_test.to_numpy(), submodel, num_feats_rel, extract, order, prep)
+            pred = one_model(X_train, X_test, submodel, num_feats_rel, extract, order, prep)
             scores.append(pred)
 
             ensembles_executed += 1
