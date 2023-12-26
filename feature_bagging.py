@@ -1,7 +1,7 @@
 # !pip install openml
 
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from sklearn.preprocessing import PolynomialFeatures
 
 import math

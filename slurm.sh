@@ -9,3 +9,4 @@
 
 # Run the Python script with the corresponding parameter from the CSV file
 python job.py $SLURM_ARRAY_TASK_ID > cifar10_$SLURM_ARRAY_TASK_ID.log
+# python3 job.py $SLURM_ARRAY_TASK_ID 
