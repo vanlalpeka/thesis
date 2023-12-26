@@ -1,7 +1,4 @@
 prep;extract;submodel;no_submodels;interaction_terms_then_randomize
-[""];ae;lin;100;True
-["std"];ae;lin;100;True
-["norm"];ae;lin;100;True
 [""];rbm;lin;100;True
 ["std"];rbm;lin;100;True
 ["norm"];rbm;lin;100;True
@@ -9,6 +6,8 @@ prep;extract;submodel;no_submodels;interaction_terms_then_randomize
 ["std","clahe"];rbm;lin;100;True
 ["std","gray"];rbm;lin;100;True
 ["std","blur"];rbm;lin;100;True
+["norm","blur"];rbm;lin;100;True
+["blur"];rbm;lin;100;True
 ["std","canny"];rbm;lin;100;True
 ["std","augment","clahe"];rbm;lin;100;True
 ["std","augment","gray"];rbm;lin;100;True
