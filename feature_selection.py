@@ -63,7 +63,7 @@ class RBM:
     def __init__(self, num_visible, num_hidden):
         self.num_hidden = num_hidden
         self.num_visible = num_visible
-        self.debug_print = True
+        self.debug_print = False
 
         # Initialize a weight matrix, of dimensions (num_visible x num_hidden), using
         # a uniform distribution between -sqrt(6. / (num_hidden + num_visible))
@@ -260,7 +260,8 @@ def feature_selection(X_train, X_test, num_feats_rel, extract):
                         epochs=max_epochs,
                         shuffle=True,
                         validation_data=(X_test, X_test),
-                        callbacks=[early_stopping]
+                        callbacks=[early_stopping],
+                        verbose=0,
                         )
 
         X_train = autoencoder.encoder(X_train).numpy()

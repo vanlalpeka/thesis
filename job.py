@@ -6,12 +6,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, roc_curve
 import tensorflow as tf
 from tensorflow.keras.datasets import cifar10
-
+from datetime import datetime
 import csv 
 import time 
 import json
 import os
-import datetime
 
 import sys
 
@@ -75,7 +74,7 @@ def main():
             end_time = time.time()
             runtime = end_time - start_time
             auc = roc_auc_score(Y_test, pred)
-            print(f'CIFAR10 Class-{normal_class} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
+            print(f'{datetime.now()} CIFAR10 Class-{normal_class} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
 
 if __name__ == "__main__":
     main()
