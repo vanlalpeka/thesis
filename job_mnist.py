@@ -74,7 +74,7 @@ try:
                     end_time = time.time()
                     runtime = end_time - start_time
                     auc = roc_auc_score(Y_test, pred)
-                    logger.info(f'MNIST Class-{normal_class} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc}}')
+                    logger.info(f'MNIST Class-{normal_class} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc}')
 
 except Exception:
     logger.exception("message")

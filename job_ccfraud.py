@@ -81,14 +81,13 @@ try:
                             prep=param["prep"], 
                             extract=param["extract"], 
                             submodel=param["submodel"], 
-                            # interaction_terms_then_randomize=param["interaction_terms_then_randomize"]
                             )
 
                 end_time = time.time()
                 runtime = end_time - start_time
                 auc = roc_auc_score(y_test, pred)
                 print(f'AUROC : {auc}')
-                logger.info(f'CCFraud \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc} \t {param["interaction_terms_then_randomize"]}')
+                logger.info(f'CCFraud \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc}')
 
 except Exception:
     logger.exception("message")
