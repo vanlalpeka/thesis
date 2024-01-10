@@ -1,3 +1,8 @@
+########################################################################################################
+# Runs KNN, Isolation Forest, and CBLOF from the pyod package.
+# The train:test ratio is 80:20 for the credit card fraud and the satellite datasets, and 2:1 for CIFAR-10 and MNIST
+# A classifier is run 10 times each for a given train:test set, and the average of the 10 will be compared with other classifiers.
+########################################################################################################
 import openml
 import pandas as pd
 import numpy as np
@@ -21,7 +26,7 @@ import os
 import datetime
 import logging 
 
-logging.basicConfig(filename=f"./logs1222/competitors_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./log3/competitors_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 logger=logging.getLogger() 
@@ -36,10 +41,10 @@ classifiers = {
     'Cluster-Based Local Outlier Factor (CBLOF)': CBLOF(n_clusters=10)
 }
 
+# This function is for the tabular dataset i.e. credit card and satellite
 def compare_classifiers_on_tab_data(ds_id, ds_name):
     dataset = openml.datasets.get_dataset(
-        # dataset_id= 42175,  # CreditCardFraudDetection
-        dataset_id= ds_id,  # CreditCardFraudDetection
+        dataset_id= ds_id,  
         download_data=True,
         download_qualities=True,
         download_features_meta_data=True,
@@ -47,34 +52,40 @@ def compare_classifiers_on_tab_data(ds_id, ds_name):
 
     X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute)
 
+    # Satellite dataset needs re-mapping the 'y'
     if ds_name == "Satellite":
         y = y.map({'Normal':0, 'Anomaly':1})
 
+    # Normalize the X prior to classification
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
 
+    # Run the classifiers on the train:test set
     for _, (clf_name, clf) in enumerate(classifiers.items()):
-
+        # Run a classifier 10 times on the train:test set
         for i in range(10):
-            print(f'{i} out of 10')
-
+            # print(f'{i} out of 10')
             start_time = time.time()
 
-            # Identify indices of samples where y=1 (fraudulent transactions)
-            fraud_indices = [i for i, label in enumerate(y) if label == 1]
+            # Train:Test split
+            # The train set has no anomaly
+            ##################################################################
+            # Identify indices of samples where y=1 (anomaly)
+            anomaly_indices = [i for i, label in enumerate(y) if label == 1]
 
-            X_fraud = X[fraud_indices]
-            y_fraud = y[fraud_indices]
+            X_anomaly = X[anomaly_indices]
+            y_anomaly = y[anomaly_indices]
 
-            X_no_fraud = np.delete(X, fraud_indices, axis=0)
-            y_no_fraud = np.delete(y, fraud_indices, axis=0)
+            X_no_anomaly = np.delete(X, anomaly_indices, axis=0)
+            y_no_anomaly = np.delete(y, anomaly_indices, axis=0)
 
-            # Split the data into train and test sets
-            X_train, X_test, y_train, y_test = train_test_split(X_no_fraud, y_no_fraud, test_size=0.2)
+            # Split the set of "no anomalies" into train and test sets
+            X_train, X_test, y_train, y_test = train_test_split(X_no_anomaly, y_no_anomaly, test_size=0.2)
 
-            # Include all samples with y=1 in the test set
-            X_test = np.concatenate((X_test, X_fraud), axis=0)
-            y_test = np.concatenate((y_test, y_fraud), axis=0)
+            # Append the anomalies to the test set. 
+            X_test = np.concatenate((X_test, X_anomaly), axis=0)
+            y_test = np.concatenate((y_test, y_anomaly), axis=0)
+            ##################################################################
 
             clf.fit(X_train)
 
@@ -89,62 +100,68 @@ def compare_classifiers_on_tab_data(ds_id, ds_name):
             logger.info(f'{ds_name} {clf_name} {runtime} {auc}')
 
 
+# This function is for the image dataset i.e. CIFAR-10 and MNIST
 def compare_classifiers_on_img_data(ds_name):
     if ds_name == 'CIFAR-10':
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        (X_train, y_train), (X_test, y_test) = cifar10.load_data()
 
     if ds_name == 'MNIST':
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
+    # Flatten X
+    X_train = X_train.reshape(X_train.shape[0], -1)
+    X_test = X_test.reshape(X_test.shape[0], -1)
+    # print("X_train.shape:", X_train.shape)
+
+    # Normalize X
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Run the classifiers 
     for _, (clf_name, clf) in enumerate(classifiers.items()):
+        # In each loop, one class is considered as normal and the other classes as anomalies
         for c in range(10):  # normal class
+            # Run a classifier 10 times on the train:test set
             for i in range(10):
-                print(f'Class-{c}: {i} out of 10')
-
                 start_time = time.time()
 
+                # Train:Test split  
+                ##################################################################
                 normal_class = c
-                # Train data
-                X_train = x_train[np.isin(y_train, [normal_class]).flatten()]
-                # Y_train = y_train[np.isin(y_train, [normal_class]).flatten()]
-                # print("X_train.shape:", X_train.shape)
+                # Train data of the normal class
+                XX_train = X_train[np.isin(y_train, [normal_class]).flatten()]
+                # print("XX_train.shape:", XX_train.shape)
 
-                # Test data: Normal
-                X_test = x_test[np.isin(y_test, [normal_class]).flatten()]
-                Y_test = np.zeros((len(X_test), 1), dtype=int)
+                # Test data of the normal class
+                XX_test = X_test[np.isin(y_test, [normal_class]).flatten()]
+                yy_test = np.zeros((len(XX_test), 1), dtype=int)  # y=0 for normal class
                 # print("X_test Y_test set shape:", X_test.shape, Y_test.shape)
 
-                # Test data: Anomalies
-                idx = np.arange(len(Y_test))
+                # Test data of the anomalies i.e. the not normal classes
+                idx = np.arange(len(yy_test))
                 np.random.shuffle(idx)
-                anomalies_count = int(.50*len(idx))
-
-                anomalies_X_test = x_test[np.isin(y_test, [normal_class], invert=True).flatten()][:anomalies_count]  # "invert=True" get the anomalies i.e. the not normal_class
-                anomalies_Y_test = np.ones((anomalies_count, 1), dtype=int)
+                anomalies_count = int(.50*len(idx))  # The test data has normal:anomaly ratio of 2:1
+                anomalies_XX_test = X_test[np.isin(y_test, [normal_class], invert=True).flatten()][:anomalies_count]  # "invert=True" get the anomalies i.e. the not normal_class
+                anomalies_yy_test = np.ones((anomalies_count, 1), dtype=int)  # y=1 for the anomalies
                 # print("subset_x_test subset_y_test set shape:", anomalies_X_test.shape, anomalies_Y_test.shape)
 
-                X_test = np.concatenate((X_test, anomalies_X_test))
-                Y_test = np.concatenate((Y_test, anomalies_Y_test))
+                XX_test = np.concatenate((XX_test, anomalies_XX_test))
+                yy_test = np.concatenate((yy_test, anomalies_yy_test))
+                ##################################################################
 
-                X_train = X_train.reshape(X_train.shape[0], -1)
-                X_test = X_test.reshape(X_test.shape[0], -1)
-                scaler = MinMaxScaler()
-                # scaler = StandardScaler()
-                X_train = scaler.fit_transform(X_train)
-                X_test = scaler.transform(X_test)
-
-                clf.fit(X_train)
-                Y_test_scores = clf.decision_function(X_test)  # outlier scores
+                clf.fit(XX_train)
+                yy_test_scores = clf.decision_function(XX_test)  # outlier scores
 
                 end_time = time.time()
                 runtime = end_time - start_time
-                auc = roc_auc_score(Y_test, Y_test_scores)
+                auc = roc_auc_score(yy_test, yy_test_scores)
 
-                print(f'{ds_name} {clf_name}: Normal class = {normal_class}, {runtime} sec., AUROC = {auc}')
+                print(f'{ds_name} {clf_name} {i} out of 10: Normal class = {normal_class}, {runtime} sec., AUROC = {auc}')
                 logger.info(f'{ds_name} {clf_name} Class-{normal_class} {runtime} {auc}')
 
 
-# compare_classifiers_on_tab_data(42175, "CCFraud")  # CreditCardFraudDetection
-# compare_classifiers_on_tab_data(40900, "Satellite")  # Satellite soil category
+compare_classifiers_on_tab_data(42175, "CCFraud")  # CreditCardFraudDetection
+compare_classifiers_on_tab_data(40900, "Satellite")  # Satellite soil category
 compare_classifiers_on_img_data("CIFAR-10")  # CIFAR-10
 compare_classifiers_on_img_data("MNIST")  # MNIST

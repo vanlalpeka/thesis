@@ -24,7 +24,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./logs1222/ccfraud_300_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./log3/ccfraud_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 
@@ -47,7 +47,7 @@ dataset = openml.datasets.get_dataset(
 
 
 try:
-    with open("params/p_ccf_300.csv") as f:
+    with open("params/ccfraud.csv") as f:
         # heading = next(f) 
         params = csv.DictReader(f, delimiter=';')
         # params=csv.reader(f)

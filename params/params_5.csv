@@ -1,9 +1,0 @@
-prep;extract;submodel;no_submodels
-["std"];rbm;svm;50
-["norm"];rbm;svm;50
-["std"];ae;svm;50
-["norm"];ae;svm;50
-["std"];pca;svm;50
-["norm"];pca;svm;50
-["std"];ica;svm;50
-["norm"];ica;svm;50

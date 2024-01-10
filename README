@@ -1,0 +1,35 @@
+One job for each of the datasets. e.g. job_sat.py is for the Satellite dataset.
+The parameters for each run are stored in the params folder.
+
+Each job calls the SEAN pipeline and the pseudo code goes like this:
+
+for i in 10:  # each config/pipeline is run 10 times
+    Train:Test separation into X_train, X_test, and y_test
+    X_train, X_test = pre_process(X_train, X_test, prep)
+    X_train, X_test = feature_selection(X_train, X_test, feat_sel_percent, extract)
+
+    scores = []
+    for j in count_of_submodels:
+        X_train, X_test = feature_bagging(X_train, X_test, order, feat_sel_percent)
+        
+        # eqn. 2 from the DEAN paper
+        goal = np.ones(len(X_train))
+
+        cv = simple_submodel(fit_intercept=False).fit(X_train, goal)
+
+        # eqn. 4 from the DEAN paper
+        meanv = np.mean(cv.predict(X_train))
+        pred = np.square(cv.predict(X_test) - meanv)
+
+        scores.append(pred)
+
+    final_anomaly_score = mean(scores)
+
+    auc = roc_auc_score(y_test, final_anomaly_score)
+
+
+#####################################################################################################################################
+#####################################################################################################################################
+
+competitors.py runs KNN, Isolation Forest, and CBLOF from the pyod package. The AUROCs from these runs are compared against SEAN's.
+

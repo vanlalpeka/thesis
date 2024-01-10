@@ -34,7 +34,7 @@ def pre_process(X_train, X_test, prep):
             X_train = aug(images=X_train)
 
         if 'augment' in prep:
-            # append augmented dataset to the existing dataset
+            # The augmented set will be added the existing dataset
             # ia.seed(1)
 
             seq = iaa.Sequential([
