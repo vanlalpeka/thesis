@@ -18,12 +18,19 @@ from one_model import *
 def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, order=2, prep=[], extract='ica', submodel='lin'):
     """
     X_train and X_test are ndarray of the train and the test sets.
+
     no_submodels: The count of the sub-models for the ensemble.
+
     feat_sel_percent: The percentage of features to select e.g. 0.2 means select 20% of the original features.
+
     order: Degree of polynomials for feature bagging.
-    prep: A list of pre-processing methods. It can be an empty list, in which case no preprocessing will be done.
+
+    prep: A list of pre-processing methods. It can be an empty list, in which case no preprocessing will be done; 
+    except for image file, which will be flattend regardless of this field
+
     extract: A feature selection method. Options are ica, pca, nmf, rbm, ae, tsne.
-    submodel: A submodel for the ensemeble. Options are lin, svm, lasso, elastic.
+    
+    submodel: A submodel for the ensemble. Options are lin, svm, lasso, elastic.
     """
 
     # Computation budget (in seconds)

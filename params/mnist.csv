@@ -1,2 +1,2 @@
 prep;extract;submodel;no_submodels
-norm;pca;lin;100
+norm,gray;pca;lin;100

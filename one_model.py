@@ -1,8 +1,3 @@
-##############################################################################################################
-# This is the submodel of the ensemble
-# It runs, in sequence, the feature_bagging() and a simple submodel.
-##############################################################################################################
-
 import numpy as np
 from sklearn.linear_model import LinearRegression, LassoCV, ElasticNetCV, SGDOneClassSVM
 # from scipy.interpolate import CubicSpline
@@ -13,7 +8,25 @@ from feature_selection import *
 from feature_bagging import *
 
 
-def one_model(X_train, X_test, submodel, feat_sel_percent, extract, order, prep):
+def one_model(X_train, X_test, feat_sel_percent,  order, prep, extract, submodel):
+    """
+    This is the submodel of the ensemble.
+    It runs the feature_bagging(), followed by a simple submodel.
+
+    X_train and X_test are ndarray of the train and the test sets.
+
+    feat_sel_percent: The percentage of features to select e.g. 0.2 means select 20% of the original features.
+
+    order: Degree of polynomials for feature bagging.
+
+    prep: A list of pre-processing methods. It can be an empty list, in which case no preprocessing will be done; 
+    except for image file, which will be flattend regardless of this field
+
+    extract: A feature selection method. Options are ica, pca, nmf, rbm, ae, tsne.
+    
+    submodel: A submodel for the ensemble. Options are lin, svm, lasso, elastic.
+    
+    """
     # print(f'one_model: X_train.shape: {X_train.shape} {submodel}')
     # X_train, X_test = pre_process(X_train, X_test, prep)
     # X_train, X_test = feature_selection(X_train, X_test, feat_sel_percent, extract)

@@ -9,6 +9,17 @@ from skimage.util import invert
 # PRE-PROCESSING
 ######################################################################################
 def pre_process(X_train, X_test, prep):
+    """
+    X_train and X_test are ndarray of the train and the test sets.
+    Tabular datasets have only two preprocessing options: normalization, and standardization
+    Image dataset have, in addition to these two, skeletonization, Canny filter, CLAHE, Gaussian blur,
+    augmentation, and grayscale coversions. 
+    The image dataset are also flattened i.e. X_train and X_test are transformed into a tabular dataset
+    where a row represents one image.
+
+    prep: A list of pre-processing methods. It can be an empty list, in which case no preprocessing will be done; 
+    except for image file, which will be flattend regardless of this field
+    """
     # print(f'pre_process X_train.shape : {X_train.shape}, prep: {prep}')
     # image dataset
     if len(X_train.shape) > 2:
@@ -72,17 +83,23 @@ def pre_process(X_train, X_test, prep):
             X_train = np.concatenate((X_train, augmented_images))
 
         if 'gray' in prep:
+            # Luma grayscale conversion
             X_train = np.dot(X_train[..., :3], [0.2126 , 0.7152 , 0.0722 ])
             X_test = np.dot(X_test[..., :3], [0.2126 , 0.7152 , 0.0722 ])
+            
+            # # Luma grayscale conversion with gamma correction
+            # X_train = np.dot(X_train[..., :3]**(1.0/2.2), [0.2126 , 0.7152 , 0.0722 ])
+            # X_test = np.dot(X_test[..., :3]**(1.0/2.2), [0.2126 , 0.7152 , 0.0722 ])
 
-        # print('flatten images')
+            # # Gleam grayscale conversion with gamma correction
+            # X_train = np.dot(X_train[..., :3]**(1.0/2.2), [1.0/3 , 1.0/3 , 1.0/3 ])
+            # X_test = np.dot(X_test[..., :3]**(1.0/2.2), [1.0/3 , 1.0/3 , 1.0/3 ])
+
         # Flatten the images
         X_train = X_train.reshape(X_train.shape[0], -1)
         X_test = X_test.reshape(X_test.shape[0], -1)
 
-        # X_train = np.reshape(X_train,(X_train.shape[0],np.prod(X_train.shape[1:])))
-        # X_test = np.reshape(X_test ,(X_test.shape[0],np.prod(X_test.shape[1:])))
-        # print('done flattening images. x.shape, X_test.shape : ', x.shape, X_test.shape)
+        # print(f'done flattening images. X_train.shape {X_train.shape}, X_test.shape {X_test.shape}')
 
     # [0,1] Normalization
     if 'norm' in prep:

@@ -12,10 +12,15 @@ from tensorflow.keras.callbacks import EarlyStopping
 from autoencoder import *
 from rbm import *
 
-######################################################################################
-# FEATURE SELECTION
-######################################################################################
-def feature_selection(X_train, X_test, feat_sel_percent, extract=[]):
+def feature_selection(X_train, X_test, feat_sel_percent, extract):
+    """
+    X_train and X_test are ndarray of the train and the test sets.
+    Image datasets are already flattened in the pre_process() function.
+
+    feat_sel_percent: The percentage of features to select e.g. 0.2 means select 20% of the original features.
+
+    extract: A feature selection method. Options are ica, pca, nmf, rbm, ae, tsne.
+    """
     # print(f'feature_selection: {feat_sel_percent}  {extract}')
     n_components = int(math.ceil(feat_sel_percent*X_train.shape[1]))
     max_epochs = int(np.sqrt(X_train.shape[1]) * 10)

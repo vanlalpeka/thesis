@@ -5,7 +5,15 @@ from sklearn.preprocessing import PolynomialFeatures
 import math
 import itertools
 
-def feature_bagging(X_train, X_test, order, feat_sel_percent):
+def feature_bagging(X_train, X_test, feat_sel_percent, order):
+    """
+    X_train and X_test are ndarray of the train and the test sets.
+    Bagging with interaction terms only.
+
+    feat_sel_percent: The percentage of features to select e.g. 0.2 means select 20% of the original features.
+
+    order: Degree of polynomials for feature bagging.
+    """
 
     # Build interaction terms using PolynomialFeatures. interaction_only=True.
     poly = PolynomialFeatures(degree = order, include_bias=False, interaction_only=True)
