@@ -9,19 +9,22 @@
 import numpy as np
 from tqdm import tqdm
 import time
+from sklearn.preprocessing import PolynomialFeatures
 
 from pre_process import *
 from feature_selection import *
 # from feature_bagging import *
 from one_model import *
 
-def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, order=2, prep=[], extract='ica', submodel='lin'):
+def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 50, order=2, prep=[], extract='ica', submodel='lin'):
     """
     X_train and X_test are ndarray of the train and the test sets.
 
     no_submodels: The count of the sub-models for the ensemble.
 
     feat_sel_percent: The percentage of features to select e.g. 0.2 means select 20% of the original features.
+
+    max_feats: The maximum number of features to select.
 
     order: Degree of polynomials for feature bagging.
 
@@ -39,6 +42,7 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, order=2, prep
 
     X_train, X_test = pre_process(X_train, X_test, prep)
     X_train, X_test = feature_selection(X_train, X_test, feat_sel_percent, extract)
+    # print(f'After feature selection: X_train.shape {X_train.shape}, X_test.shape {X_test.shape}')
 
     scores=[]
     count_of_submodels_executed = 0
@@ -49,9 +53,17 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, order=2, prep
         return np.zeros(X_test.shape[0]), count_of_submodels_executed
 
     else:
+    
+        poly = PolynomialFeatures(degree = order, include_bias=False, interaction_only=True)
+
+        X_train_interaction_terms = poly.fit_transform(X_train)
+        X_test_interaction_terms = poly.transform(X_test)
+        # print(f'After PolynomialFeatures: X_train_interaction_terms.shape {X_train_interaction_terms.shape}, X_test_interaction_terms.shape {X_test_interaction_terms.shape}')
+
         for i in tqdm(range(no_submodels)):
             
-            pred = one_model(X_train, X_test, submodel, feat_sel_percent, extract, order, prep)
+            pred = one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, order, prep, extract, submodel)
+            # pred = one_model(X_train, X_test, feat_sel_percent,  order, prep, extract, submodel)
             scores.append(pred)
 
             count_of_submodels_executed += 1

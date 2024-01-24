@@ -78,6 +78,15 @@ try:
 
                 end_time = time.time()
                 runtime = end_time - start_time
+
+                print(f'Job y_test : {np.histogram(y_test, bins=10)}')
+                print(f'Job pred: {np.histogram(pred, bins=10)}')
+
+                # for i,j in zip(y_test, pred):
+                #     print(i,type(i),j,type(j))
+                #     # if int(i) != j:
+                #     #     print(i,j)
+    
                 auc = roc_auc_score(y_test, pred)
                 print(f'AUROC : {auc}')
                 logger.info(f'Satellite \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc}')

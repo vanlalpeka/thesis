@@ -21,6 +21,10 @@ def pre_process(X_train, X_test, prep):
     except for image file, which will be flattend regardless of this field
     """
     # print(f'pre_process X_train.shape : {X_train.shape}, prep: {prep}')
+
+    if 'none' in prep:
+        return X_train, X_test
+
     # image dataset
     if len(X_train.shape) > 2:
         if 'skel' in prep:

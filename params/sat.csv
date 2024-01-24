@@ -1,4 +1,5 @@
 prep;extract;submodel;no_submodels
+norm;pca;lin;100
 norm;ae;svm;100
 norm;ae;lin;100
 norm;ae;elastic;100
@@ -8,7 +9,6 @@ norm;tsne;lin;100
 norm;tsne;elastic;100
 norm;tsne;lasso;100
 norm;pca;svm;100
-norm;pca;lin;100
 norm;pca;elastic;100
 norm;pca;lasso;100
 norm;none;svm;100

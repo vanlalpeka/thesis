@@ -12,7 +12,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from autoencoder import *
 from rbm import *
 
-def feature_selection(X_train, X_test, feat_sel_percent, extract):
+def feature_selection(X_train, X_test, feat_sel_percent, max_feats, extract):
     """
     X_train and X_test are ndarray of the train and the test sets.
     Image datasets are already flattened in the pre_process() function.
@@ -22,8 +22,16 @@ def feature_selection(X_train, X_test, feat_sel_percent, extract):
     extract: A feature selection method. Options are ica, pca, nmf, rbm, ae, tsne.
     """
     # print(f'feature_selection: {feat_sel_percent}  {extract}')
+
+    # Limit the number of features to max_feats
     n_components = int(math.ceil(feat_sel_percent*X_train.shape[1]))
+    if n_components > max_feats:
+        n_components = max_feats
+
     max_epochs = int(np.sqrt(X_train.shape[1]) * 10)
+
+    if extract == 'none':
+        return X_train, X_test
 
     if extract == "rbm":   # ZCA + RBM
         # Calculate the mean of each of the columns
