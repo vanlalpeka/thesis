@@ -41,7 +41,7 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
     start_time = time.time()
 
     X_train, X_test = pre_process(X_train, X_test, prep)
-    X_train, X_test = feature_selection(X_train, X_test, feat_sel_percent, extract)
+    X_train, X_test = feature_selection(X_train, X_test, feat_sel_percent, max_feats, extract)
     # print(f'After feature selection: X_train.shape {X_train.shape}, X_test.shape {X_test.shape}')
 
     scores=[]
