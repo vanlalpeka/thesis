@@ -15,7 +15,7 @@ import datetime
 import logging 
 
 #now we will Create and configure logger 
-logging.basicConfig(filename=f"./log3/sat_{datetime.datetime.today()}.log", 
+logging.basicConfig(filename=f"./log/sat_{datetime.datetime.today()}.log", 
 					format='%(asctime)s %(message)s', 
 					filemode='w') 
 

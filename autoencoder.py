@@ -15,7 +15,7 @@ class Autoencoder(Model):
           Dense(latent_dim, activation='relu'),
         ])
         self.decoder = tf.keras.Sequential([
-          Dense(tf.math.reduce_prod(shape), activation='sigmoid'),
+          Dense(tf.math.reduce_prod(shape).numpy(), activation='sigmoid'),
           Reshape(shape)
         ])
 
