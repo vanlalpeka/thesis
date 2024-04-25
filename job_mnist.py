@@ -1,6 +1,9 @@
 from sean import *
 
-import openml
+# Use unverified SSL to avoid SSL Certificate error 1006 in LiDO3
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, roc_curve
