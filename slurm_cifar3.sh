@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --time=329:55:00
-#SBATCH --array=2001-3000%50     # Number of parameter sets
+#SBATCH --array=1-1000%500     # Number of parameter sets
 #SBATCH --mem=40000
 #SBATCH --partition=ultralong
 #SBATCH --job-name=cifar10
@@ -14,5 +14,6 @@ module load python/3.11.7-gcc114-base
 
 # Run the Python script with the corresponding parameter from the CSV file
 export PYTHONUNBUFFERED=TRUE
-python3 job_cifar10.py $SLURM_ARRAY_TASK_ID
+ROWINDEX=$((SLURM_ARRAY_TASK_ID+2000))
+python3 job_cifar10.py $ROWINDEX
 

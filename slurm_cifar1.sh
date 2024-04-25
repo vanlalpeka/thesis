@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --time=329:55:00
-#SBATCH --array=1-1000%50     # Number of parameter sets
+#SBATCH --array=1-1000%500     # Number of parameter sets
 #SBATCH --mem=40000
 #SBATCH --partition=ultralong
 #SBATCH --job-name=cifar10
