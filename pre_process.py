@@ -22,9 +22,9 @@ def pre_process(X_train, X_test, prep):
     """
     # print(f'pre_process X_train.shape : {X_train.shape}, prep: {prep}')
 
-    if 'none' in prep:
-        return X_train, X_test
-
+    # if 'none' in prep:
+        # return X_train, X_test
+    
     # image dataset
     if len(X_train.shape) > 2:
         if 'skel' in prep:
@@ -116,6 +116,9 @@ def pre_process(X_train, X_test, prep):
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
 
+    if 'none' in prep:
+        return X_train, X_test
+    
     # print("pre_process : X_train.shape X_train.shape : ", X_train.shape, X_test.shape)
 
     return X_train, X_test
