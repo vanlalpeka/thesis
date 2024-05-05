@@ -28,8 +28,16 @@ def pre_process(X_train, X_test, prep):
     # image dataset
     if len(X_train.shape) > 2:
         if 'skel' in prep:
-            image = invert(X_train)
-            X_train = skeletonize(image)
+            if len(X_train.shape) > 3  # colored images
+            # Luma grayscale conversion
+                X_train = np.dot(X_train[..., :3], [0.2126 , 0.7152 , 0.0722 ])
+                X_test = np.dot(X_test[..., :3], [0.2126 , 0.7152 , 0.0722 ])
+            
+            image_train = invert(X_train)
+            image_test = invert(X_test)
+            print('skeletonize shape: image.shape : ', image_train.shape)
+            X_train = skeletonize(image_train)
+            X_test = skeletonize(image_test)
 
         if 'canny' in prep:
             # A value close to 1.0 means that only the edge image is visible.
@@ -37,16 +45,19 @@ def pre_process(X_train, X_test, prep):
             # If a tuple (a, b), a random value from the range a <= x <= b will be sampled per image.
             aug = iaa.Canny(alpha=(0.75, 1.0))
             X_train = aug(images=X_train)
+            X_test = aug(images=X_test)
 
         if 'clahe' in prep:
             # CLAHE on all channels of the images
             aug = iaa.AllChannelsCLAHE()
             X_train = aug(images=X_train)
+            X_test = aug(images=X_test)
 
         if 'blur' in prep:
             # Blur each image with a gaussian kernel with a sigma of 3.0
             aug = iaa.GaussianBlur(sigma=(0.0, 3.0))
             X_train = aug(images=X_train)
+            X_test = aug(images=X_test)
 
         if 'augment' in prep:
             # The augmented set will be added the existing dataset
