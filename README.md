@@ -6,5 +6,5 @@ How to test:
 - Second, execute competitors.py to run KNN, Isolation Forest, and CBLOF from the pyod package.
 - Finally, compare the AUROCs from the two steps above to gauge the performance.
 
-Here's a high-level history of the versions.
+Here's a high-level history of the code versions.
 ![image](https://github.com/user-attachments/assets/efe62fdd-b569-4f3c-bd33-9620e6f1c0b7)
