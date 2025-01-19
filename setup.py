@@ -21,7 +21,6 @@ setuptools.setup(
         'openml',	
         'pyod',	
         'tqdm',	
-        'tensorflow',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

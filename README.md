@@ -15,22 +15,12 @@ The parameters are as follows:
 
 ## Example
 ```
-python main.py <dataset>
-```
-Four dataset options: mnist, cifar10, ccfraud, sattelite
-
-The following command will run the algorithm for $mnist$ dataset referring the run parameters from /src/config/main.csv
-```
 python main.py mnist
 ```
 
 ## Results
 The AUROCs of the runs are stored in this <a href="https://docs.google.com/spreadsheets/d/1lLax3dy0JjQOxW_wwGM35UwRHdO8CJlR9QSlvxNbVNc/edit?usp=sharing">Google Sheet</a>
 
-## How to pull from the GitHub Container Registry:
-```
-docker pull ghcr.io/vanlalpeka/msc_thesis:latest
-```
 
 ## Pseudo-code
 ```
