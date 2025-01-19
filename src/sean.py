@@ -27,7 +27,7 @@ from feature_selection import *
 # from feature_bagging import *
 from one_model import *
 
-def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 50, order=2, prep=[], extract='ica', submodel='lin'):
+def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 50, order=2, prep=[], extract='ica', submodel='lin', computation_budget=600):
     """
     X_train and X_test are ndarray of the train and the test sets.
 
@@ -48,7 +48,7 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
     """
 
     # Computation budget (in seconds)
-    computation_budget = 600  # 10 minutes
+    computation_budget = computation_budget  # 10 minutes
     start_time = time.time()
 
     X_train, X_test = pre_process(X_train, X_test, prep)

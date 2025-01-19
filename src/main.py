@@ -13,12 +13,13 @@ import time
 import os
 import sys
 import logging 
-from sklearn.preprocessing import PolynomialFeatures
+import argparse
+
+# from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 from sklearn.datasets import fetch_openml
 from tensorflow.keras.datasets import cifar10, mnist
-
 
 from pre_process import *
 from feature_selection import *
@@ -26,7 +27,8 @@ from feature_bagging import *
 from one_model import *
 from sean import *
 
-def main(dataset_id='ccfraud'):
+def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, computation_budget=600):
+                                                            
     if not dataset_id:
         raise ValueError("dataset_id is required")
     
@@ -82,6 +84,10 @@ def main(dataset_id='ccfraud'):
                                     prep=param["prep"], 
                                     extract=param["extract"], 
                                     submodel=param["submodel"], 
+                                    feat_sel_percent=feat_sel_percent, 
+                                    max_feats=max_feats, 
+                                    order=order, 
+                                    computation_budget=computation_budget,
                                     )
 
                         end_time = time.time()
@@ -132,8 +138,11 @@ def main(dataset_id='ccfraud'):
                                                             prep=param["prep"].split(','), 
                                                             extract=param["extract"], 
                                                             submodel=param["submodel"], 
+                                                            feat_sel_percent=feat_sel_percent, 
+                                                            max_feats=max_feats, 
+                                                            order=order, 
+                                                            computation_budget=computation_budget,
                                                             )
-
                             end_time = time.time()
                             runtime = end_time - start_time
                             auc = roc_auc_score(Y_test, pred)
@@ -151,7 +160,18 @@ def main(dataset_id='ccfraud'):
 
 # executes only when run directly, not when this file is imported into another python file
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        main(dataset_id=sys.argv[1]) 
-    else:
-        main() 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dataset_id", help="Dataset ID")
+    parser.add_argument("--feat_sel_percent", help="Feature selection percentage", type=float, default=0.2)
+    parser.add_argument("--max_feats", help="Maximum number of features", type=int, default=50)
+    parser.add_argument("--order", help="Degree of polynomials for feature bagging", type=int, default=2)
+    parser.add_argument("--computation_budget", help="Computation budget in seconds", type=int, default=600)
+    args = parser.parse_args()
+
+    # print(args.dataset_id)
+    # print(args.feat_sel_percent)
+    # print(args.max_feats)
+    # print(args.order)
+    # print(args.computation_budget)
+
+    main(args.dataset_id, args.feat_sel_percent, args.max_feats, args.order, args.computation_budget)
