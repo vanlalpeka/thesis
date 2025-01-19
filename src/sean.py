@@ -7,9 +7,20 @@
 #######################################################################################################################
 
 import numpy as np
+import pandas as pd
+import csv 
+import time 
+import json
+import os
+import datetime
+import sys
+import logging 
+import openml
 from tqdm import tqdm
-import time
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score, roc_curve
+
 
 from pre_process import *
 from feature_selection import *
@@ -48,19 +59,19 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
     count_of_submodels_executed = 0
 
     elapsed_time = time.time() - start_time
+
     if elapsed_time > computation_budget:
         print("feature_selection(): Time limit reached. Exiting.")
         return np.zeros(X_test.shape[0]), count_of_submodels_executed
 
-    else:
-    
+    else:    
         poly = PolynomialFeatures(degree = order, include_bias=False, interaction_only=True)
 
         X_train_interaction_terms = poly.fit_transform(X_train)
         X_test_interaction_terms = poly.transform(X_test)
         # print(f'After PolynomialFeatures: X_train_interaction_terms.shape {X_train_interaction_terms.shape}, X_test_interaction_terms.shape {X_test_interaction_terms.shape}')
 
-        for i in tqdm(range(no_submodels)):
+        for _ in tqdm(range(no_submodels)):
             
             pred = one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, order, prep, extract, submodel)
             # pred = one_model(X_train, X_test, feat_sel_percent,  order, prep, extract, submodel)
@@ -79,6 +90,6 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
         return np.mean(scores,axis=0), count_of_submodels_executed
 
 
-# # executes only when run directly, not when this file is imported into another python file
-# if __name__ == '__main__':
-#     sean()
+# executes only when run directly, not when this file is imported into another python file
+if __name__ == '__main__':
+    sean()

@@ -1,4 +1,4 @@
-from sean import *
+from src.main import *
 
 import openml
 import pandas as pd

@@ -28,7 +28,7 @@ def pre_process(X_train, X_test, prep):
     # image dataset
     if len(X_train.shape) > 2:
         if 'skel' in prep:
-            if len(X_train.shape) > 3  # colored images
+            if len(X_train.shape) > 3:  # colored images
             # Luma grayscale conversion
                 X_train = np.dot(X_train[..., :3], [0.2126 , 0.7152 , 0.0722 ])
                 X_test = np.dot(X_test[..., :3], [0.2126 , 0.7152 , 0.0722 ])

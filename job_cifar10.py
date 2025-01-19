@@ -1,4 +1,4 @@
-from sean import *
+from src.main import *
 
 # Use unverified SSL to avoid SSL Certificate error 1006 in LiDO3
 import ssl
