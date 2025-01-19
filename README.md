@@ -21,7 +21,7 @@ The parameters are as follows:
 
 ## Example
 ```
-python main.py mnist
+python main.py --dataset_id=mnist
 ```
 
 ## Results
