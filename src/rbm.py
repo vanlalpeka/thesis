@@ -1,8 +1,10 @@
 import numpy as np
+import logging
 
 #https://github.com/echen/restricted-boltzmann-machines/blob/master/rbm.py
 class RBM:
-
+    logger=logging.getLogger(__name__) 
+    
     def __init__(self, num_visible, num_hidden):
         self.num_hidden = num_hidden
         self.num_visible = num_visible
@@ -74,7 +76,7 @@ class RBM:
 
             error = np.sum((data - neg_visible_probs) ** 2)
             if self.debug_print:
-                print("Epoch %s: error is %s" % (epoch, error))
+                logger.info("RBM Epoch %s: error is %s" % (epoch, error))
 
             # early stopping
             wait += 1

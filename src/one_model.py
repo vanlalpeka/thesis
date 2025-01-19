@@ -5,13 +5,10 @@ from sklearn.linear_model import LinearRegression, LassoCV, ElasticNetCV, SGDOne
 
 from pre_process import *
 from feature_selection import *
-# from feature_bagging import *
-
 
 def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, order, prep, extract, submodel):
     """
     This is the submodel of the ensemble.
-    It runs the feature_bagging(), followed by a simple submodel.
 
     X_train and X_test are ndarray of the train and the test sets.
 
@@ -32,9 +29,7 @@ def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_perc
     
     """
     # print(f'one_model: X_train.shape: {X_train.shape} {submodel}')
-    # X_train, X_test = pre_process(X_train, X_test, prep)
-    # X_train, X_test = feature_selection(X_train, X_test, feat_sel_percent, extract)
-    # X_train, X_test = feature_bagging(X_train, X_test, feat_sel_percent order )
+    
 
     # Limit the number of features to max_feats
     n_components = int(math.ceil(feat_sel_percent*X_train_interaction_terms.shape[1]))

@@ -11,42 +11,42 @@ import pandas as pd
 import csv 
 import time 
 import os
-import sys
 import logging 
 import argparse
+import openml
 
 # from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
-from sklearn.datasets import fetch_openml
+# from sklearn.datasets import fetch_openml
 from tensorflow.keras.datasets import cifar10, mnist
 
 from pre_process import *
 from feature_selection import *
-from feature_bagging import *
 from one_model import *
 from sean import *
 
-def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, computation_budget=600):
-                                                            
-    if not dataset_id:
-        raise ValueError("dataset_id is required")
-    
+def main(dataset_id, feat_sel_percent, max_feats, order, computation_budget):
+    """
+    dataset_id: Dataset ID
+    feat_sel_percent: Feature selection percentage
+    max_feats: Maximum number of features
+    order: Degree of polynomials for feature bagging
+    computation_budget: Computation budget in seconds
+    """
+
     # create log directory if it does not exist
     os.makedirs("log/", exist_ok=True)
 
     logging.basicConfig(filename=f"log/AUROC_{dataset_id}.log", 
-                        format='%(asctime)s %(message)s', 
-                        filemode='w') 
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+                        filemode='w',
+                        level=logging.INFO) 
 
-    #Let us Create an object 
-    logger=logging.getLogger() 
+    logger=logging.getLogger(__name__) 
 
-    #Now we are going to Set the threshold of logger to DEBUG 
-    logger.setLevel(logging.DEBUG) 
-
-    print("START")
-    logger.info('START')
+    logger.debug(f'main(): dataset_id: {dataset_id} | feat_sel_percent: {feat_sel_percent} | max_feats: {max_feats} | order: {order} | computation_budget: {computation_budget}')
+    logger.debug('START')
 
     try:
         with open("config/main.csv") as f:
@@ -54,7 +54,18 @@ def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, co
 
             # tabular datasets
             if dataset_id in ['ccfraud', 'sattelite']:
-                X, y = fetch_openml('dataset_id', version=1, as_frame=True)
+                d_id = '42175' if dataset_id == 'ccfraud' else '40900'
+
+                dataset = openml.datasets.get_dataset(
+                    dataset_id=d_id,
+                    download_data=True,
+                    download_qualities=True,
+                    download_features_meta_data=True,
+                    )
+                                
+                X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute)
+            
+                # X, y = fetch_openml('42175', version=1, as_frame=True) if dataset_id == 'ccfraud' else fetch_openml('40900', version=1, as_frame=True)
 
                 # Identify indices of samples where y=1 (fraudulent transactions)
                 fraud_indices = [i for i, label in enumerate(y) if label == 1]
@@ -76,7 +87,7 @@ def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, co
                 for param in params:
                     for i in range(10):
                         start_time = time.time()
-                        print(f'dataset_id: {dataset_id} | {i} out of 10 | param: {param}')
+                        logger.debug(f'dataset_id: {dataset_id} | {i} out of 10 | param: {param}')
 
                         pred, ensembles_executed = sean(X_train.to_numpy(), 
                                     X_test.to_numpy(), 
@@ -93,7 +104,7 @@ def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, co
                         end_time = time.time()
                         runtime = end_time - start_time
                         auc = roc_auc_score(y_test, pred)
-                        print(f'AUROC : {auc} ')
+                        logger.debug(f'AUROC : {auc} ')
                         logger.info(f'{dataset_id} \t {param["prep"]} \t {param["extract"]} \t {param["submodel"]} \t {ensembles_executed} \t {runtime} \t {auc}')
 
             # image datasets
@@ -102,7 +113,7 @@ def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, co
                 for param in params:
                     for c in range(10): # 10 classes
                         for i in range(10): # Run 10 times for each class
-                            print(f'dataset_id: {dataset_id} | Class:{c} | {i} out of 10 | param: {param}')
+                            logger.debug(f'dataset_id: {dataset_id} | Class:{c} | {i} out of 10 | param: {param}')
                             start_time = time.time()
 
                             normal_class = c
@@ -153,7 +164,7 @@ def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, co
                 raise ValueError("Invalid dataset_id")
 
     except Exception:
-        logger.exception("message")
+        logger.exception("config file 'main.csv' error")
 
     logger.info('END')
 
@@ -161,7 +172,7 @@ def main(dataset_id='ccfraud', feat_sel_percent=0.2, max_feats = 50, order=2, co
 # executes only when run directly, not when this file is imported into another python file
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("dataset_id", help="Dataset ID")
+    parser.add_argument("--dataset_id", help="Dataset ID", type=str, default='mnist')
     parser.add_argument("--feat_sel_percent", help="Feature selection percentage", type=float, default=0.2)
     parser.add_argument("--max_feats", help="Maximum number of features", type=int, default=50)
     parser.add_argument("--order", help="Degree of polynomials for feature bagging", type=int, default=2)

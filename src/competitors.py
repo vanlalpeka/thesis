@@ -4,11 +4,9 @@
 # A classifier is run 10 times each for a given train:test set, and the average of the 10 will be compared with other classifiers.
 ########################################################################################################
 import openml
-import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, roc_curve
-import tensorflow as tf
+from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.datasets import cifar10, mnist
 
@@ -21,18 +19,20 @@ from pyod.utils.example import visualize
 from tqdm import tqdm
 
 import time 
-import json
-import os
-import datetime
 import logging 
+import os
 
-logging.basicConfig(filename=f"./log3/competitors_{datetime.datetime.today()}.log", 
-					format='%(asctime)s %(message)s', 
-					filemode='w') 
-logger=logging.getLogger() 
-logger.setLevel(logging.DEBUG) 
+# create log directory if it does not exist
+os.makedirs("log/", exist_ok=True)
+
+logging.basicConfig(filename=f"log/AUROC_competition.log", 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+                    filemode='w',
+                    level=logging.INFO) 
+
+logger=logging.getLogger(__name__) 
 logger.info('START')
-print("START")
+# print("START")
 
 classifiers = {
     'Isolation Forest':IForest(),
@@ -96,7 +96,7 @@ def compare_classifiers_on_tab_data(ds_id, ds_name):
             auc = roc_auc_score(y_test, y_test_scores)
 
             # print(f' y_test.shape {y_test.shape} ; pred.shape {pred.shape}')
-            print(f'{ds_name} {clf_name} {runtime} sec., AUROC = {auc}')
+            # print(f'{ds_name} {clf_name} {runtime} sec., AUROC = {auc}')
             logger.info(f'{ds_name} {clf_name} {runtime} {auc}')
 
 
@@ -157,7 +157,7 @@ def compare_classifiers_on_img_data(ds_name):
                 runtime = end_time - start_time
                 auc = roc_auc_score(yy_test, yy_test_scores)
 
-                print(f'{ds_name} {clf_name} {i} out of 10: Normal class = {normal_class}, {runtime} sec., AUROC = {auc}')
+                # print(f'{ds_name} {clf_name} {i} out of 10: Normal class = {normal_class}, {runtime} sec., AUROC = {auc}')
                 logger.info(f'{ds_name} {clf_name} Class-{normal_class} {runtime} {auc}')
 
 

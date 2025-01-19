@@ -7,24 +7,13 @@
 #######################################################################################################################
 
 import numpy as np
-import pandas as pd
-import csv 
 import time 
-import json
-import os
-import datetime
-import sys
 import logging 
-import openml
 from tqdm import tqdm
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, roc_curve
-
 
 from pre_process import *
 from feature_selection import *
-# from feature_bagging import *
 from one_model import *
 
 def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 50, order=2, prep=[], extract='ica', submodel='lin', computation_budget=600):
@@ -46,6 +35,7 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
     
     submodel: A submodel for the ensemble. Options are lin, svm, lasso, elastic.
     """
+    logger=logging.getLogger(__name__) 
 
     # Computation budget (in seconds)
     computation_budget = computation_budget  # 10 minutes
@@ -61,10 +51,12 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
     elapsed_time = time.time() - start_time
 
     if elapsed_time > computation_budget:
-        print("feature_selection(): Time limit reached. Exiting.")
+        logger.debug("sean(): Time limit reached. Exiting.")
         return np.zeros(X_test.shape[0]), count_of_submodels_executed
 
     else:    
+        # Feature bagging
+        # Build interaction terms using PolynomialFeatures. interaction_only=True.
         poly = PolynomialFeatures(degree = order, include_bias=False, interaction_only=True)
 
         X_train_interaction_terms = poly.fit_transform(X_train)
@@ -81,7 +73,7 @@ def sean(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 5
 
             elapsed_time = time.time() - start_time
             if elapsed_time > computation_budget:
-                print("Ensemble: Time limit reached. Exiting.")
+                logger.debug("sean() Ensemble: Time limit reached. Exiting.")
                 break
 
         scores=np.array(scores)

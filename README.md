@@ -5,6 +5,12 @@ The algorithm explores the effectiveness of an ensemble of simple sub-models lik
 ## Usage
 The main.py file contains the main function to run the algorithm. The algorithm is designed to run for four datasets: mnist, cifar10, ccfraud, and sattelite. The main function will run the algorithm for the dataset provided as a command-line argument. The run parameters for the algorithm are stored in /src/config/main.csv. The results of the run are stored in /src/log. The tabular datasets are pulled from OpenML at runtime, and the image datasets are tensorflow built-in datasets.
 
+## Datasets
+- MNIST:
+- CIFAR10: 
+- CCFraud:
+- Satellite: 
+
 ## CLI Parameters
 The parameters are as follows:
 - dataset_id: the dataset to use (mnist, cifar10, ccfraud, sattelite)

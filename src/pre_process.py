@@ -1,4 +1,3 @@
-import imgaug as ia
 import imgaug.augmenters as iaa
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -35,7 +34,7 @@ def pre_process(X_train, X_test, prep):
             
             image_train = invert(X_train)
             image_test = invert(X_test)
-            print('skeletonize shape: image.shape : ', image_train.shape)
+            # print('skeletonize shape: image.shape : ', image_train.shape)
             X_train = skeletonize(image_train)
             X_test = skeletonize(image_test)
 

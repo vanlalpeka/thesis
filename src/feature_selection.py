@@ -1,7 +1,6 @@
 import numpy as np
 # import pandas as pd
 import math
-import itertools
 
 from sklearn.decomposition import FastICA, PCA, NMF
 from sklearn.manifold import TSNE

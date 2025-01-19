@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import Input, Flatten, Dense, Reshape, Conv2D, Conv2DTranspose
+from tensorflow.keras.layers import  Flatten, Dense, Reshape
 
 class Autoencoder(Model):
     def __init__(self, latent_dim, shape):
