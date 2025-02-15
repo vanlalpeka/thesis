@@ -2,11 +2,9 @@ import numpy as np
 from sklearn.linear_model import LinearRegression, LassoCV, ElasticNetCV, SGDOneClassSVM
 # from scipy.interpolate import CubicSpline
 # from pyearth import Earth
+import math
 
-from .pre_process import *
-from .feature_selection import *
-
-def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, order, prep, extract, submodel):
+def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, submodel):
     """
     This is the submodel of the ensemble.
 
@@ -17,13 +15,6 @@ def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_perc
     feat_sel_percent: The percentage of features to select e.g. 0.2 means select 20% of the original features.
 
     max_feats: The maximum number of features to select.
-
-    order: Degree of polynomials for feature bagging.
-
-    prep: A list of pre-processing methods. It can be an empty list, in which case no preprocessing will be done; 
-    except for image file, which will be flattend regardless of this field
-
-    extract: A feature selection method. Options are ica, pca, nmf, rbm, ae, tsne.
     
     submodel: A submodel for the ensemble. Options are lin, svm, lasso, elastic.
     

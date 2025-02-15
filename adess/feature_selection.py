@@ -5,11 +5,14 @@ import math
 from sklearn.decomposition import FastICA, PCA, NMF
 from sklearn.manifold import TSNE
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from tensorflow.keras import losses
 from tensorflow.keras.callbacks import EarlyStopping
 
-from .autoencoder import Autoencoder
-from .rbm import RBM
+from adess.autoencoder import Autoencoder
+from adess.rbm import RBM
 
 
 def feature_selection(X_train, X_test, feat_sel_percent, max_feats, extract):

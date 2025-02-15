@@ -15,9 +15,9 @@ from sklearn.model_selection import train_test_split
 
 import argparse
 
-from adess import pre_process
-from adess import feature_selection
-from adess import one_model
+from adess.pre_process import pre_process
+from adess.feature_selection import feature_selection
+from adess.one_model import one_model
 
 # A custom argument type for a list of strings
 def list_of_strings(arg):
@@ -30,7 +30,8 @@ def print_arguments(args):
 def print_result(pred, ensembles_executed):
     print(f'Mean of Predicted Y = {np.mean(np.array(pred, np.float64))}, Count of submodel executed = {ensembles_executed}')
     
-def adess(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 50, order=2, prep=[], extract='ica', submodel='lin', computation_budget=600):
+def adess(X_train, X_test, no_submodels=500, feat_sel_percent=0.2, max_feats = 50, order=2, prep=['norm'], extract='pca', submodel='lin', computation_budget=600):
+    # print("adess.py: adess()")
     """
     Description:
     An ensemble of submodels.
@@ -79,7 +80,7 @@ def adess(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 
 
         for _ in tqdm(range(no_submodels)):
             
-            pred = one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, order, prep, extract, submodel)
+            pred = one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, submodel)
             # pred = one_model(X_train, X_test, feat_sel_percent,  order, prep, extract, submodel)
             scores.append(pred)
 
@@ -89,44 +90,17 @@ def adess(X_train, X_test, no_submodels=5000, feat_sel_percent=0.2, max_feats = 
             if elapsed_time > computation_budget:
                 break
 
-        scores=np.array(scores)
+        # scores=np.array(scores)
 
         # eqn. 5 from the DEAN paper
-        return np.mean(scores,axis=0), count_of_submodels_executed
+        return np.mean(np.array(scores, np.float64)), count_of_submodels_executed
 
 
 # executes only when run directly, not when this file is imported into another python file
 if __name__ == '__main__':
-    print('Running adess()')
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--X_train", help="Training data", type=np.ndarray)
-    parser.add_argument("--X_test", help="Testing data", type=np.ndarray)
-    parser.add_argument("--feat_sel_percent", help="Feature selection percentage", type=float, default=0.2)
-    parser.add_argument("--max_feats", help="Maximum number of features", type=int, default=50)
-    parser.add_argument("--order", help="Degree of polynomials for feature bagging", type=int, default=2)
-    parser.add_argument("--computation_budget", help="Computation budget in seconds", type=int, default=600)
-    parser.add_argument("--no_submodels", help="Count of submodels in the ensemble", type=int, default=500)
-    parser.add_argument("--prep", help="List of preprocessing options (choose one or many): [skel,canny,clahe,blur,augment,gray,norm,std,none]", type=list_of_strings, default=['norm'])
-    parser.add_argument("--extract", help="Feature selection option (choose one): [rbm,tsne,pca,ica,nmf,ae,none]", type=str, default='ae')
-    parser.add_argument("--submodel", help="Submodel type option (choose one): [lin,lasso,elastic,svm]", type=str, default='lin')
-    args = parser.parse_args()
+    X, y= load_diabetes(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-    if args.X_train is None:
-        X, y= load_diabetes(return_X_y=True)
-        args.X_train, args.X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    pred, ensembles_executed = adess(X_train, X_test)
 
-    pred, ensembles_executed = adess(args.X_train,
-                                    args.X_test,
-                                    args.no_submodels, 
-                                    args.feat_sel_percent, 
-                                    args.max_feats, 
-                                    args.order, 
-                                    args.prep, 
-                                    args.extract, 
-                                    args.submodel, 
-                                    args.computation_budget, 
-                                #   'norm' if not args.prep else args.prep.split(','), 
-                                    )
-    f = [f'{k} = {v}' for k, v in vars(args).items()]
-    print(f'X_train.shape = {args.X_train.shape}, X_test.shape = {args.X_test.shape}, {str(f[2:])[1:-1]}, Mean of Predicted Y = {np.mean(np.array(pred, np.float64))}, Count of submodel executed = {ensembles_executed}')
+    print(f'X_train.shape = {X_train.shape}, X_test.shape = {X_test.shape}, Mean of Predicted Y = {pred}, Count of submodel executed = {ensembles_executed}')
