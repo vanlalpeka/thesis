@@ -2,8 +2,13 @@
 This is the code for my master's thesis: <a href="Master Thesis with affidavit.pdf">Anomaly Detection Using an Ensemble with Simple Sub-models, 2024</a>.
 The algorithm explores the effectiveness of an ensemble of simple sub-models like linear regression in detecting anomalies.
 
+
 ## Installation
-Install the package
+Install the package.
+```
+pip install adess==1.0.0
+```
+
 
 # Parameters
 Run with --help to see the parameters
@@ -34,10 +39,24 @@ options:
   --submodel SUBMODEL   Submodel type option (choose one): [lin,lasso,elastic,svm] (default: lin)
 ```
 
+
 # CLI
+
 ```
-adess --train path/to/train.csv --test path/to/test.csv
+adess --train path/to/train --test path/to/test
 ```
+
+Example:
+```
+adess --train train.npy --test test.npy
+```
+Output:
+```
+X_train.shape = (353, 10), X_test.shape = (89, 10), 'feat_sel_percent = 0.2', 'max_feats = 50', 'order = 2', 'computation_budget = 600', 'no_submodels = 500', 'prep = norm', 'extract = pca', 'submodel = lin'
+100%|█████████████████████████████████████████| 500/500 [00:00<00:00, 1094.41it/s]
+Mean of Predicted Y = 8.005149077019986e-32, Count of submodel executed = 500
+```
+
 
 # Python
 1. Import the sklearn diabetes dataset as an example.
@@ -57,5 +76,5 @@ adess --train path/to/train.csv --test path/to/test.csv
 ```
 
 
-## Results
+## Results from the thesis experiments
 The AUROCs of the runs reported in the thesis are stored in this <a href="https://docs.google.com/spreadsheets/d/1lLax3dy0JjQOxW_wwGM35UwRHdO8CJlR9QSlvxNbVNc/edit?usp=sharing">Google Sheet</a>

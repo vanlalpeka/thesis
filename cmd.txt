@@ -1,0 +1,6 @@
+# install a package locally. Run these cmd in the same folder where the toml file is.
+python -m pip install -e .
+python -m pip install --upgrade build
+python -m build
+python -m pip install --upgrade twine
+python -m twine upload  dist/* 

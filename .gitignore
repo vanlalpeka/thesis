@@ -4,6 +4,7 @@ __pycache__/
 src/
 Dockerfile
 *.csv
+*.npy
 
 .venv/
 
@@ -50,7 +51,6 @@ coverage.xml
 # Django stuff:
 *.log
 *.pot
-*.txt
 
 # Sphinx documentation
 docs/_build/

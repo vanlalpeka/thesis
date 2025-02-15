@@ -23,10 +23,6 @@ from adess.one_model import one_model
 def list_of_strings(arg):
     return arg.split(',')
 
-def print_arguments(args):
-    f = [f'{k} = {v}' for k, v in vars(args).items()]
-    print(f'X_train.shape = {args.X_train.shape}, X_test.shape = {args.X_test.shape}, {str(f[2:])[1:-1]}')
-
 def print_result(pred, ensembles_executed):
     print(f'Mean of Predicted Y = {np.mean(np.array(pred, np.float64))}, Count of submodel executed = {ensembles_executed}')
     
