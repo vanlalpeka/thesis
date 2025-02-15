@@ -23,8 +23,8 @@ ADESS: Anomaly Detection using Ensemble of simple sub=models
 
 options:
   -h, --help            show this help message and exit
-  --train TRAIN         Training data (default: None)
-  --test TEST           Testing data (default: None)
+  --train TRAIN         Training data in .npy file (default: None)
+  --test TEST           Testing data in .npy file (default: None)
   --feat_sel_percent FEAT_SEL_PERCENT
                         Feature selection percentage (default: 0.2)
   --max_feats MAX_FEATS

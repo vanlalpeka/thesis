@@ -9,8 +9,8 @@ from adess.adess import adess
 def main():
     # print('__main__.py: main()')
     parser = argparse.ArgumentParser(description="ADESS: Anomaly Detection using Ensemble of simple sub=models", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--train", help="Training data", type=pathlib.Path, required=True)
-    parser.add_argument("--test", help="Testing data", type=pathlib.Path, required=True)
+    parser.add_argument("--train", help="Training data in .npy file", type=pathlib.Path, required=True)
+    parser.add_argument("--test", help="Testing data in .npy file", type=pathlib.Path, required=True)
     parser.add_argument("--feat_sel_percent", help="Feature selection percentage", type=float, default=0.2)
     parser.add_argument("--max_feats", help="Maximum number of features", type=int, default=50)
     parser.add_argument("--order", help="Degree of polynomials for feature bagging", type=int, default=2)
