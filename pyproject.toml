@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adess"
+version = "1.0.0"
+authors = [
+    {name = "Vanlal Peka"},
+]
+description = "A package for ADESS"
+dependencies = [
+"numpy==1.26.4",
+"imgaug==0.4.0",
+"tensorflow==2.16.1",
+"tqdm==4.67.1",
+"scikit-learn==1.6.1",
+]
+
+[project.scripts]
+adess = "adess.__main__:main"

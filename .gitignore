@@ -1,8 +1,10 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+src/
+Dockerfile
 
-.thesisvenv/
+.venv/
 
 # C extensions
 *.so

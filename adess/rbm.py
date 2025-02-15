@@ -1,14 +1,14 @@
 import numpy as np
-import logging
+# import logging
 
 #https://github.com/echen/restricted-boltzmann-machines/blob/master/rbm.py
 class RBM:
-    logger=logging.getLogger(__name__) 
+    # logger=logging.getLogger(__name__) 
     
     def __init__(self, num_visible, num_hidden):
         self.num_hidden = num_hidden
         self.num_visible = num_visible
-        self.debug_print = False
+        # self.debug_print = False
 
         # Initialize a weight matrix, of dimensions (num_visible x num_hidden), using
         # a uniform distribution between -sqrt(6. / (num_hidden + num_visible))
@@ -75,8 +75,8 @@ class RBM:
             self.weights += learning_rate * ((pos_associations - neg_associations) / num_examples)
 
             error = np.sum((data - neg_visible_probs) ** 2)
-            if self.debug_print:
-                logger.info("RBM Epoch %s: error is %s" % (epoch, error))
+            # if self.debug_print:
+            #     logger.info("RBM Epoch %s: error is %s" % (epoch, error))
 
             # early stopping
             wait += 1

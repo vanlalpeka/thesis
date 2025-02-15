@@ -8,8 +8,9 @@ from sklearn.manifold import TSNE
 from tensorflow.keras import losses
 from tensorflow.keras.callbacks import EarlyStopping
 
-from autoencoder import *
-from rbm import *
+from .autoencoder import Autoencoder
+from .rbm import RBM
+
 
 def feature_selection(X_train, X_test, feat_sel_percent, max_feats, extract):
     """
@@ -114,3 +115,7 @@ def feature_selection(X_train, X_test, feat_sel_percent, max_feats, extract):
     # print(f"feature_reduction {extract} X_train.shape : {X_train.shape},  X_test.shape: {X_test.shape}")
 
     return X_train, X_test
+
+
+if __name__ == '__main__':
+    feature_selection()

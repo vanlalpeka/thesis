@@ -132,3 +132,6 @@ def pre_process(X_train, X_test, prep):
     # print("pre_process : X_train.shape X_train.shape : ", X_train.shape, X_test.shape)
 
     return X_train, X_test
+
+if __name__ == '__main__':
+    pre_process()

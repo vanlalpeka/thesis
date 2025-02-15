@@ -3,8 +3,8 @@ from sklearn.linear_model import LinearRegression, LassoCV, ElasticNetCV, SGDOne
 # from scipy.interpolate import CubicSpline
 # from pyearth import Earth
 
-from pre_process import *
-from feature_selection import *
+from .pre_process import *
+from .feature_selection import *
 
 def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_percent, max_feats, order, prep, extract, submodel):
     """
@@ -81,3 +81,6 @@ def one_model(X_train_interaction_terms, X_test_interaction_terms, feat_sel_perc
 
     return pred
     # return np.square(cv.predict(X_test))
+
+if __name__ == '__main__':
+    one_model()
