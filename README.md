@@ -1,10 +1,15 @@
-## Introduction
-This is the code for my master's thesis: <a href="Master Thesis with affidavit.pdf">Anomaly Detection Using an Ensemble with Simple Sub-models, 2024</a>.
+# Introduction
+This algorithm is developed as part of my master's thesis: <a href="Master Thesis with affidavit.pdf">Anomaly Detection Using an Ensemble with Simple Sub-models, 2024</a>.
 The algorithm explores the effectiveness of an ensemble of simple sub-models like linear regression in detecting anomalies.
 
+# Results from the thesis experiments
+The AUROCs of the runs reported in the thesis are stored in this <a href="https://docs.google.com/spreadsheets/d/1lLax3dy0JjQOxW_wwGM35UwRHdO8CJlR9QSlvxNbVNc/edit?usp=sharing">Google Sheet</a>
 
-## Installation
-Install the package.
+# Benchmarking
+![alt text](image.png)
+
+# Installation
+Install the package using pip.
 ```
 pip install adess==1.0.0
 ```
@@ -40,7 +45,7 @@ options:
 ```
 
 
-# CLI
+# Usage: CLI
 
 ```
 adess --train path/to/train --test path/to/test
@@ -58,7 +63,7 @@ Mean of Predicted Y = 8.005149077019986e-32, Count of submodel executed = 500
 ```
 
 
-# Python
+# Usage: Python
 1. Import the sklearn diabetes dataset as an example.
 2. Split and load the dataset to the adess() function. X_test will be used to predict 'y'.
 3. The mean prediction (of y) and the (default) ensemble size are printed.
@@ -76,5 +81,4 @@ Mean of Predicted Y = 8.005149077019986e-32, Count of submodel executed = 500
 ```
 
 
-## Results from the thesis experiments
-The AUROCs of the runs reported in the thesis are stored in this <a href="https://docs.google.com/spreadsheets/d/1lLax3dy0JjQOxW_wwGM35UwRHdO8CJlR9QSlvxNbVNc/edit?usp=sharing">Google Sheet</a>
+
